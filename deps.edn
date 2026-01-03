@@ -1,0 +1,8 @@
+{:paths ["src" "dev"]
+ :deps {org.clojure/clojure {:mvn/version "1.11.1"}
+        metosin/malli {:mvn/version "0.13.0"}
+        org.clojure/tools.logging {:mvn/version "1.2.4"}}
+ :aliases {:test {:extra-paths ["test" "dev"]
+                  :extra-deps {lambdaisland/kaocha {:mvn/version "1.88.1376"}
+                               ch.qos.logback/logback-classic {:mvn/version "1.4.14"}}
+                  :main-opts ["-m" "kaocha.runner"]}}}
