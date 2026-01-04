@@ -1,0 +1,2 @@
+{:cljdoc.v1/doc
+ {:source-root "src"}}
