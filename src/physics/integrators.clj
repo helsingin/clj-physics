@@ -8,6 +8,18 @@
 (defn- scale [k v]
   (mapv #(* k %) v))
 
+(defn- find-event
+  "Linear interpolation to find time t* where event-fn(t*) = 0."
+  [event-fn t-prev state-prev val-prev t-curr state-curr val-curr]
+  (let [f-prev (double val-prev)
+        f-curr (double val-curr)
+        dt (- t-curr t-prev)
+        ;; Linear interpolation: t* = t_prev - f_prev * (dt / (f_curr - f_prev))
+        t-star (+ t-prev (* (- f-prev) (/ dt (- f-curr f-prev))))
+        ratio (/ (- t-star t-prev) dt)
+        state-star (v+ state-prev (scale ratio (mapv - state-curr state-prev)))]
+    {:time t-star :state state-star}))
+
 (defn rk4
   "Classical Runge-Kutta (order 4) for fixed step problems.
 
@@ -17,10 +29,11 @@
     :t0          initial time
     :dt          step size (seconds)
     :steps       number of steps to integrate
+    :events      optional map of {id event-fn} where event-fn(t, state) -> double
     :store?      if true, retains history for inspection
 
-  Returns {:state final-state :time final-time :history [...]}"
-  [{:keys [derivative initial-state t0 dt steps store?]
+  Returns {:state final-state :time final-time :history [...] :event {:id .. :time .. :state ..}}"
+  [{:keys [derivative initial-state t0 dt steps events store?]
     :or {t0 0.0 store? false}}
    ]
   (let [derivative (or derivative (fn [_ _] (repeat (count initial-state) 0.0)))
@@ -32,19 +45,36 @@
            t t0
            state init-state
            hist history]
-      (if (>= i steps)
-        {:state state
-         :time t
-         :history (persistent! hist)}
-        (let [k1 (derivative t state)
-              k2 (derivative (+ t (* 0.5 dt)) (v+ state (scale (* 0.5 dt) k1)))
-              k3 (derivative (+ t (* 0.5 dt)) (v+ state (scale (* 0.5 dt) k2)))
-              k4 (derivative (+ t dt) (v+ state (scale dt k3)))
-              delta (scale (/ dt 6.0)
-                           (v+ k1 (scale 2.0 k2) (scale 2.0 k3) k4))
-              new-state (v+ state delta)
-              new-hist (if store? (conj! hist {:t (+ t dt) :state new-state}) hist)]
-          (recur (inc i) (+ t dt) new-state new-hist))))))
+      (let [event-vals (when (seq events)
+                         (update-vals events #(% t state)))
+            next-k1 (derivative t state)
+            next-k2 (derivative (+ t (* 0.5 dt)) (v+ state (scale (* 0.5 dt) next-k1)))
+            next-k3 (derivative (+ t (* 0.5 dt)) (v+ state (scale (* 0.5 dt) next-k2)))
+            next-k4 (derivative (+ t dt) (v+ state (scale dt next-k3)))
+            delta (scale (/ dt 6.0)
+                         (v+ next-k1 (scale 2.0 next-k2) (scale 2.0 next-k3) next-k4))
+            new-state (v+ state delta)
+            new-t (+ t dt)
+            new-event-vals (when (seq events)
+                             (update-vals events #(% new-t new-state)))
+            triggered (when (seq events)
+                        (first
+                         (keep (fn [[id val]]
+                                 (let [prev-val (get event-vals id)]
+                                   (when (<= (* (double prev-val) (double val)) 0.0)
+                                     (assoc (find-event (get events id) t state prev-val new-t new-state val)
+                                            :id id))))
+                               new-event-vals)))]
+        (if triggered
+          {:state (:state triggered)
+           :time (:time triggered)
+           :history (persistent! (if store? (conj! hist triggered) hist))
+           :event triggered}
+          (if (>= (inc i) steps)
+            {:state new-state
+             :time new-t
+             :history (persistent! (if store? (conj! hist {:t new-t :state new-state}) hist))}
+            (recur (inc i) new-t new-state (if store? (conj! hist {:t new-t :state new-state}) hist))))))))
 
 (def rkf45-coefficients
   {:a2 (/ 1.0 4.0)
@@ -81,8 +111,8 @@
     :atol absolute tolerance
     :h-init optional initial step size
 
-  Returns {:state final-state :time tf :steps history}."
-  [{:keys [derivative initial-state t-span rtol atol h-init store?]
+  Returns {:state final-state :time tf :steps history :event {:id .. :time .. :state ..}}."
+  [{:keys [derivative initial-state t-span rtol atol h-init events store?]
     :or {rtol 1e-6 atol 1e-9 store? false}}
    ]
   (let [[t0 tf] t-span
@@ -105,7 +135,9 @@
          :time t
          :steps (persistent! step-hist)
          :history (persistent! hist)}
-        (let [h (min h (- tf t))
+        (let [event-vals (when (seq events)
+                           (update-vals events #(% t state)))
+              h (min h (- tf t))
               k1 (derivative t state)
               k2 (derivative (+ t (* a2 h)) (v+ state (scale (* h b21) k1)))
               k3 (derivative (+ t (* a3 h)) (v+ state (scale (* h b31) k1) (scale (* h b32) k2)))
@@ -132,11 +164,28 @@
           (if (<= err-norm 1.0)
             (let [new-t (+ t h)
                   new-state (mapv identity y5)
-                  new-hist (if store? (conj! hist {:t new-t :state new-state}) hist)
-                  factor (-> (* safety (math/pow (max err-norm 1e-12) -0.2))
-                             (max min-factor)
-                             (min max-factor))]
-              (recur new-t (* h factor) new-state new-hist (conj! step-hist h)))
+                  new-event-vals (when (seq events)
+                                   (update-vals events #(% new-t new-state)))
+                  triggered (when (seq events)
+                              (first
+                               (keep (fn [[id val]]
+                                       (let [prev-val (get event-vals id)]
+                                         (when (<= (* (double prev-val) (double val)) 0.0)
+                                           (assoc (find-event (get events id) t state prev-val new-t new-state val)
+                                                  :id id))))
+                                     new-event-vals)))]
+              (if triggered
+                {:state (mapv - (:state triggered) init-state)
+                 :final-state (:state triggered)
+                 :time (:time triggered)
+                 :steps (persistent! (conj! step-hist h))
+                 :history (persistent! (if store? (conj! hist triggered) hist))
+                 :event triggered}
+                (let [new-hist (if store? (conj! hist {:t new-t :state new-state}) hist)
+                      factor (-> (* safety (math/pow (max err-norm 1e-12) -0.2))
+                                 (max min-factor)
+                                 (min max-factor))]
+                  (recur new-t (* h factor) new-state new-hist (conj! step-hist h)))))
             (let [factor (-> (* safety (math/pow (max err-norm 1e-12) -0.25))
                              (max min-factor)
                              (min max-factor))

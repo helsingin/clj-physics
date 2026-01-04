@@ -8,7 +8,7 @@
   (let [geometry (-> core/fixture-urban-canyon-geometry
                      (assoc :type :cartesian-grid
                             :resolution {:nx 8 :ny 6}
-                            :spacing {:dx 2.0 :dy 2.0}))
+                            :spacing {:dx-m 2.0 :dy-m 2.0}))
         {:keys [flow-field metadata]} (surrogate/predict {:solver :potential-flow
                                                           :geometry geometry
                                                           :parameters {:strength 4.0
@@ -22,7 +22,7 @@
   (let [geometry (-> core/fixture-urban-canyon-geometry
                      (assoc :type :cartesian-grid
                             :resolution {:nx 5 :ny 5 :nz 4}
-                            :spacing {:dx 1.0 :dy 1.0 :dz 1.0}))
+                            :spacing {:dx-m 1.0 :dy-m 1.0 :dz-m 1.0}))
         {:keys [flow-field metadata]}
         (surrogate/predict {:solver :plume
                             :geometry geometry
@@ -39,9 +39,9 @@
                          (assoc :dimensions 2
                                 :type :cartesian-grid
                                 :resolution {:nx 8 :ny 8}
-                                :spacing {:dx 1.0 :dy 1.0})
+                                :spacing {:dx-m 1.0 :dy-m 1.0})
                          (update :origin dissoc :z)
-                         (update :extent dissoc :lz))]
+                         (update :extent dissoc :lz-m))]
     (is (thrown-with-msg?
          clojure.lang.ExceptionInfo
          #"Plume surrogate requires 3D geometry"
@@ -54,7 +54,7 @@
   (let [geometry (-> core/fixture-urban-canyon-geometry
                      (assoc :type :cartesian-grid
                             :resolution {:nx 4 :ny 4 :nz 3}
-                            :spacing {:dx 1.0 :dy 1.0 :dz 1.0}))
+                            :spacing {:dx-m 1.0 :dy-m 1.0 :dz-m 1.0}))
         bad-env (assoc-in core/fixture-neutral-atmosphere
                           [:properties :density] -1.0)]
     (is (thrown-with-msg?

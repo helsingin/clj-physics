@@ -8,7 +8,7 @@
     (testing "shallow 3D domain"
       (is (= (:dimensions geom) 3))
       (is (= (:type geom) :cartesian-grid))
-      (is (< (get-in geom [:extent :lz]) 10.0)))))
+      (is (< (get-in geom [:extent :lz-m]) 10.0)))))
 
 (deftest maritime-predict-structure-test
   (let [{:keys [flow-field residuals confidence]}

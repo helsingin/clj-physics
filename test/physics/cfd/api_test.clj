@@ -9,9 +9,9 @@
       (assoc :type :cartesian-grid
              :dimensions 2
              :origin {:x -30.0 :y -30.0}
-             :extent {:lx 60.0 :ly 60.0}
+             :extent {:lx-m 60.0 :ly-m 60.0}
              :resolution {:nx 32 :ny 32}
-             :spacing {:dx 1.9375 :dy 1.9375})))
+             :spacing {:dx-m 1.9375 :dy-m 1.9375})))
 
 (deftest predict-flow-airflow-test
   (let [result (api/predict-flow {:mode :airflow

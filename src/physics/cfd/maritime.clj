@@ -14,17 +14,17 @@
    :type :cartesian-grid
    :dimensions 3
    :origin {:x 0.0 :y 0.0 :z 0.0}
-   :extent {:lx 500.0 :ly 200.0 :lz 6.0}
+   :extent {:lx-m 500.0 :ly-m 200.0 :lz-m 6.0}
    :resolution {:nx 60 :ny 24 :nz 6}
-   :spacing {:dx 8.333 :dy 8.333 :dz 1.0}})
+   :spacing {:dx-m 8.333 :dy-m 8.333 :dz-m 1.0}})
 
 (defn default-environment
   []
   {:fluid :water
-   :properties {:density 1025.0
-                :dynamic-viscosity 0.0011
-                :temperature 288.15
-                :pressure 101325.0}})
+   :properties {:density-kg-per-m3 1025.0
+                :viscosity-pas 0.0011
+                :temperature-k 288.15
+                :pressure-pa 101325.0}})
 
 (defn- validate-geometry!
   [geometry]

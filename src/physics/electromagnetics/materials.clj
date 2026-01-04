@@ -12,9 +12,9 @@
   "Reference material for free space."
   {:material/name "vacuum"
    :material/type :dielectric
-   :material/permittivity-relative 1.0
-   :material/permeability-relative 1.0
-   :material/conductivity 0.0
+   :material/permittivity-rel 1.0
+   :material/permeability-rel 1.0
+   :material/conductivity-s-m 0.0
    :material/loss-tangent 0.0})
 
 (defn- normalise-dist [value]
@@ -35,34 +35,34 @@
    :permeability-range [mu-min mu-max]}.
 
 Phasor convention: e^{+jωt}."
-  [{:keys [name type permittivity-relative permeability-relative conductivity loss-tangent tunable
+  [{:keys [name type permittivity-rel permeability-rel conductivity-s-m loss-tangent tunable
            conductivity-distribution permittivity-distribution]
     :or {type :dielectric
-         permittivity-relative 1.0
-         permeability-relative 1.0
-         conductivity 0.0
+         permittivity-rel 1.0
+         permeability-rel 1.0
+         conductivity-s-m 0.0
          loss-tangent 0.0}}]
-  (let [perm-value (if (map? permittivity-relative)
-                     (or (:mean permittivity-relative)
-                         (:value permittivity-relative)
-                         (:mid permittivity-relative)
+  (let [perm-value (if (map? permittivity-rel)
+                     (or (:mean permittivity-rel)
+                         (:value permittivity-rel)
+                         (:mid permittivity-rel)
                          1.0)
-                     permittivity-relative)
-        cond-value (if (map? conductivity)
-                     (or (:mean conductivity)
-                         (:value conductivity)
-                         (:mid conductivity)
+                     permittivity-rel)
+        cond-value (if (map? conductivity-s-m)
+                     (or (:mean conductivity-s-m)
+                         (:value conductivity-s-m)
+                         (:mid conductivity-s-m)
                          0.0)
-                     conductivity)]
+                     conductivity-s-m)]
     {:material/name name
      :material/type type
-     :material/permittivity-relative (double perm-value)
-     :material/permeability-relative (double permeability-relative)
-     :material/conductivity (double cond-value)
+     :material/permittivity-rel (double perm-value)
+     :material/permeability-rel (double permeability-rel)
+     :material/conductivity-s-m (double cond-value)
      :material/loss-tangent (double loss-tangent)
      :material/tunable tunable
-     :material/sigma-distribution (or conductivity-distribution (normalise-dist conductivity))
-     :material/permittivity-distribution (or permittivity-distribution (normalise-dist permittivity-relative))}))
+     :material/sigma-distribution (or conductivity-distribution (normalise-dist conductivity-s-m))
+     :material/permittivity-distribution (or permittivity-distribution (normalise-dist permittivity-rel))}))
 
 (defn- interpolate [range bias]
   (let [[lo hi] range]
@@ -84,10 +84,10 @@ Phasor convention: e^{+jωt}."
 
 (defn relative-permittivity
   "Return relative permittivity εr, applying optional bias for tunable materials."
-  ([material] (emath/complex (:material/permittivity-relative material) 0.0))
+  ([material] (emath/complex (:material/permittivity-rel material) 0.0))
   ([material {:keys [bias on-clamp]}]
    (let [{:keys [permittivity-range]} (:material/tunable material)
-         εr (:material/permittivity-relative material)
+         εr (:material/permittivity-rel material)
          tanδ (:material/loss-tangent material)
          base (if (and permittivity-range bias)
                 (interpolate permittivity-range (normalise-bias (assoc (:material/tunable material) :on-clamp on-clamp) bias))
@@ -99,10 +99,10 @@ Phasor convention: e^{+jωt}."
 
 (defn relative-permeability
   "Return relative permeability μr, applying optional bias for tunable materials."
-  ([material] (:material/permeability-relative material))
+  ([material] (:material/permeability-rel material))
   ([material {:keys [bias on-clamp]}]
    (let [{:keys [permeability-range]} (:material/tunable material)
-         μr (:material/permeability-relative material)]
+         μr (:material/permeability-rel material)]
      (if (and permeability-range bias)
        (interpolate permeability-range (normalise-bias (assoc (:material/tunable material) :on-clamp on-clamp) bias))
        μr))))
@@ -127,7 +127,7 @@ Phasor convention: e^{+jωt}."
               :or {frequency-hz 0.0}}]
    (let [ε (absolute-permittivity material {:bias bias})
          μ (absolute-permeability material {:bias bias})
-         σ (:material/conductivity material)
+         σ (:material/conductivity-s-m material)
          ω (* 2.0 math/PI frequency-hz)]
      (cond
        (zero? ω)

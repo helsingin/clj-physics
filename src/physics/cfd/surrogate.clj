@@ -82,11 +82,11 @@
 (defn- gaussian-vortex
   [{:keys [origin extent resolution]} {:keys [strength radius center]}]
   (let [{:keys [nx ny]} resolution
-        {:keys [lx ly]} extent
+        {:keys [lx-m ly-m]} extent
         {:keys [x y]} origin
         {:keys [cx cy]} center
-        dx (/ lx (max 1 (dec nx)))
-        dy (/ ly (max 1 (dec ny)))]
+        dx (/ lx-m (max 1 (dec nx)))
+        dy (/ ly-m (max 1 (dec ny)))]
     (let [plane
           (vec
            (for [j (range ny)]
@@ -108,11 +108,11 @@
 (defn- gaussian-plume
   [{:keys [resolution extent origin]} {:keys [emission-rate wind-speed stability]}]
   (let [{:keys [nx ny nz]} resolution
-        {:keys [lx ly lz]} extent
+        {:keys [lx-m ly-m lz-m]} extent
         {:keys [x y z]} origin
-        dx (/ lx (max 1 (dec nx)))
-        dy (/ ly (max 1 (dec ny)))
-        dz (/ lz (max 1 (dec nz)))
+        dx (/ lx-m (max 1 (dec nx)))
+        dy (/ ly-m (max 1 (dec ny)))
+        dz (/ lz-m (max 1 (dec nz)))
         sigma-y (max 1.0 (* stability 10.0))
         sigma-z (max 1.0 (* stability 5.0))]
     (vec
@@ -136,11 +136,11 @@
                                             wave-length 30.0
                                             current-speed 1.5}}]
   (let [{:keys [nx ny nz]} resolution
-        {:keys [lx ly lz]} extent
+        {:keys [lx-m ly-m lz-m]} extent
         {:keys [x y z]} origin
-        dx (/ lx (max 1 (dec nx)))
-        dy (/ ly (max 1 (dec ny)))
-        dz (/ lz (max 1 (dec nz)))
+        dx (/ lx-m (max 1 (dec nx)))
+        dy (/ ly-m (max 1 (dec ny)))
+        dz (/ lz-m (max 1 (dec nz)))
         k (/ (* 2.0 Math/PI) (max wave-length 1.0))
         g 9.80665
         omega (math/sqrt (* g k))
@@ -165,12 +165,12 @@
   [{:keys [origin extent resolution]} {:keys [impulse roughness]
                                        :or {impulse 10.0 roughness 0.5}}]
   (let [{:keys [nx ny]} resolution
-        {:keys [lx ly]} extent
+        {:keys [lx-m ly-m]} extent
         {:keys [x y]} origin
-        dx (/ lx (max 1 (dec nx)))
-        dy (/ ly (max 1 (dec ny)))
-        cx (+ x (/ lx 2.0))
-        cy (+ y (/ ly 2.0))]
+        dx (/ lx-m (max 1 (dec nx)))
+        dy (/ ly-m (max 1 (dec ny)))
+        cx (+ x (/ lx-m 2.0))
+        cy (+ y (/ ly-m 2.0))]
     (vec
      (for [j (range ny)]
        (vec
@@ -194,8 +194,8 @@
 (defn potential-flow
   [geometry {:keys [strength radius center] :as params}]
   (let [geometry (ensure-cartesian! (cfd-core/validate-geometry! geometry))
-        center* (merge {:cx (+ (:x (:origin geometry)) (/ (:lx (:extent geometry)) 2.0))
-                        :cy (+ (:y (:origin geometry)) (/ (:ly (:extent geometry)) 2.0))}
+        center* (merge {:cx (+ (:x (:origin geometry)) (/ (:lx-m (:extent geometry)) 2.0))
+                        :cy (+ (:y (:origin geometry)) (/ (:ly-m (:extent geometry)) 2.0))}
                        center)
         flow (gaussian-vortex geometry {:strength (or strength 5.0)
                                         :radius (max 1.0 (or radius 10.0))
@@ -215,14 +215,14 @@
                      (throw (ex-info "Plume surrogate requires 3D geometry"
                                      {:dimensions (:dimensions geometry)})))
                    (let [nz (get-in geometry [:resolution :nz])
-                         lz (get-in geometry [:extent :lz])
-                         dz (get-in geometry [:spacing :dz])]
+                         lz (get-in geometry [:extent :lz-m])
+                         dz (get-in geometry [:spacing :dz-m])]
                      (when (or (nil? nz) (< nz 2))
                        (throw (ex-info "Plume surrogate requires :nz >= 2" {:resolution (:resolution geometry)})))
                      (when (or (nil? lz) (not (pos? lz)))
-                       (throw (ex-info "Plume surrogate requires :extent :lz > 0" {:extent (:extent geometry)})))
+                       (throw (ex-info "Plume surrogate requires :extent :lz-m > 0" {:extent (:extent geometry)})))
                      (when (or (nil? dz) (not (pos? dz)))
-                       (throw (ex-info "Plume surrogate requires :spacing :dz > 0" {:spacing (:spacing geometry)})))
+                       (throw (ex-info "Plume surrogate requires :spacing :dz-m > 0" {:spacing (:spacing geometry)})))
                      geometry))
         environment (cfd-core/validate-environment! environment)
         wind (get-in environment [:wind :reference] {:x 1.0 :y 0.0 :z 0.0})

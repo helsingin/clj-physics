@@ -13,9 +13,9 @@
    :type :cartesian-grid
    :dimensions 2
    :origin {:x -50.0 :y -50.0}
-   :extent {:lx 100.0 :ly 100.0}
+   :extent {:lx-m 100.0 :ly-m 100.0}
    :resolution {:nx 60 :ny 60}
-   :spacing {:dx 1.666 :dy 1.666}})
+   :spacing {:dx-m 1.666 :dy-m 1.666}})
 
 (defn default-environment
   []

@@ -16,9 +16,9 @@
 (deftest material-normalisation
   (let [m (materials/->material {:name "metasurface-tile"
                                  :type :metasurface
-                                 :permittivity-relative 2.4
-                                 :permeability-relative 1.1
-                                 :conductivity 150.0
+                                 :permittivity-rel 2.4
+                                 :permeability-rel 1.1
+                                 :conductivity-s-m 150.0
                                  :loss-tangent 0.02
                                  :tunable {:bias-range [0.0 5.0]
                                            :permittivity-range [2.0 12.0]
@@ -43,8 +43,8 @@
 
 (deftest distribution-metadata
   (let [mat (materials/->material {:name "noisy"
-                                   :conductivity {:type :uniform :min 0.1 :max 0.2}
-                                   :permittivity-relative {:type :gaussian :mean 3.0 :sd 0.1}})]
+                                   :conductivity-s-m {:type :uniform :min 0.1 :max 0.2}
+                                   :permittivity-rel {:type :gaussian :mean 3.0 :sd 0.1}})]
     (is (= :uniform (get-in mat [:material/sigma-distribution :type])))
     (is (= :gaussian (get-in mat [:material/permittivity-distribution :type])))))
 
@@ -55,7 +55,7 @@
        (materials/intrinsic-impedance
         (materials/->material {:name "lossy"
                                :type :dielectric
-                               :conductivity 0.5})
+                               :conductivity-s-m 0.5})
         {:frequency-hz 0.0}))))
 
 (deftest bias-normalisation-calls-hook

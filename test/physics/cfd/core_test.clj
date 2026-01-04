@@ -10,12 +10,12 @@
   (testing "2D geometry cannot contain z extent"
     (is (thrown-with-msg?
          clojure.lang.ExceptionInfo
-         #"2D geometries must omit :lz"
+         #"2D geometries must omit :lz-m"
          (core/validate-geometry!
           (-> core/fixture-urban-canyon-geometry
               (assoc :dimensions 2)
               (update :origin dissoc :z)
-              (assoc-in [:extent :lz] 5.0))))))
+              (assoc-in [:extent :lz-m] 5.0))))))
   (testing "2D geometry cannot retain z origin"
     (is (thrown-with-msg?
          clojure.lang.ExceptionInfo
@@ -23,7 +23,7 @@
          (core/validate-geometry!
           (-> core/fixture-urban-canyon-geometry
               (assoc :dimensions 2)
-              (update :extent dissoc :lz)))))))
+              (update :extent dissoc :lz-m)))))))
 
 (deftest environment-validation-test
   (testing "ISA-like atmosphere valid"
@@ -35,7 +35,7 @@
          #"Invalid environment"
          (core/validate-environment!
           (assoc-in core/fixture-neutral-atmosphere
-                    [:properties :density] -1.0))))))
+                    [:properties :density-kg-per-m3] -1.0))))))
 
 (deftest platform-state-vector-test
   (is (= (core/platform-state-vector core/fixture-quadrotor-platform)
@@ -45,7 +45,7 @@
   (let [cart-geom (-> core/fixture-urban-canyon-geometry
                       (assoc :type :cartesian-grid
                              :resolution {:nx 5 :ny 7 :nz 3}
-                             :spacing {:dx 1.0 :dy 1.0 :dz 1.0}))]
+                             :spacing {:dx-m 1.0 :dy-m 1.0 :dz-m 1.0}))]
     (is (= 105 (core/geometry-dof cart-geom))))
   (testing "surface mesh dof equals face count"
     (is (= 5 (core/geometry-dof core/fixture-urban-canyon-geometry)))))

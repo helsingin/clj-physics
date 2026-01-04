@@ -51,9 +51,9 @@
 
 (def spacing-schema
   [:map {:closed true}
-   [:dx positive-double-schema]
-   [:dy positive-double-schema]
-   [:dz {:optional true} positive-double-schema]])
+   [:dx-m positive-double-schema]
+   [:dy-m positive-double-schema]
+   [:dz-m {:optional true} positive-double-schema]])
 
 (def mesh-schema
   [:map {:closed true}
@@ -79,9 +79,9 @@
    [:dimensions [:enum 2 3]]
    [:origin coordinate-schema]
    [:extent [:map {:closed true}
-             [:lx positive-double-schema]
-             [:ly positive-double-schema]
-             [:lz {:optional true} positive-double-schema]]]
+             [:lx-m positive-double-schema]
+             [:ly-m positive-double-schema]
+             [:lz-m {:optional true} positive-double-schema]]]
    [:resolution {:optional true} resolution-schema]
    [:spacing {:optional true} spacing-schema]
    [:surface {:optional true} mesh-schema]
@@ -102,10 +102,10 @@
 
 (def fluid-properties-schema
   [:map {:closed true}
-   [:density positive-double-schema]          ; kg/m^3
-   [:dynamic-viscosity positive-double-schema] ; Pa·s
-   [:temperature finite-double-schema]        ; Kelvin
-   [:pressure finite-double-schema]])         ; Pa
+   [:density-kg-per-m3 positive-double-schema]
+   [:viscosity-pas positive-double-schema]
+   [:temperature-k finite-double-schema]
+   [:pressure-pa finite-double-schema]])
 
 (def environment-schema
   [:map {:closed true}
@@ -130,12 +130,12 @@
 
 (def inertia-tensor-schema
   [:map {:closed true}
-   [:ixx positive-double-schema]
-   [:iyy positive-double-schema]
-   [:izz positive-double-schema]
-   [:ixy {:optional true} finite-double-schema]
-   [:ixz {:optional true} finite-double-schema]
-   [:iyz {:optional true} finite-double-schema]])
+   [:ixx-kgm2 positive-double-schema]
+   [:iyy-kgm2 positive-double-schema]
+   [:izz-kgm2 positive-double-schema]
+   [:ixy-kgm2 {:optional true} finite-double-schema]
+   [:ixz-kgm2 {:optional true} finite-double-schema]
+   [:iyz-kgm2 {:optional true} finite-double-schema]])
 
 (def operating-regime-schema
   [:map {:closed true}
@@ -147,15 +147,15 @@
   [:map {:closed true}
    [:id keyword?]
    [:category [:enum :uas :ugv :usv :umv :structure]]
-   [:reference-length positive-double-schema]
-   [:reference-area positive-double-schema]
-   [:mass positive-double-schema]
+   [:reference-length-m positive-double-schema]
+   [:reference-area-m2 positive-double-schema]
+   [:mass-kg positive-double-schema]
    [:inertia {:optional true} inertia-tensor-schema]
    [:operating-regime {:optional true} operating-regime-schema]
   [:control-surfaces {:optional true}
    [:map-of keyword?
     [:map {:closed true}
-     [:area positive-double-schema]
+     [:area-m2 positive-double-schema]
      [:deflection-range [:tuple finite-double-schema finite-double-schema]]]]]
    [:metadata {:optional true} map?]])
 
@@ -181,8 +181,8 @@
     (when (and (= dimensions 2) (contains? origin :z))
       (throw (ex-info "2D geometries must omit :z from :origin"
                       {:origin origin :dimensions dimensions})))
-    (when (and (= dimensions 2) (contains? extent :lz))
-      (throw (ex-info "2D geometries must omit :lz from :extent" {:extent extent})))
+    (when (and (= dimensions 2) (contains? extent :lz-m))
+      (throw (ex-info "2D geometries must omit :lz-m from :extent" {:extent extent})))
     (when (and (= type :cartesian-grid)
                (not (and resolution spacing)))
       (throw (ex-info "Cartesian grids require :resolution and :spacing" {:geometry geometry})))
@@ -215,7 +215,7 @@
    :type :surface-mesh
    :dimensions 3
    :origin {:x 0.0 :y 0.0 :z 0.0}
-   :extent {:lx 120.0 :ly 80.0 :lz 60.0}
+   :extent {:lx-m 120.0 :ly-m 80.0 :lz-m 60.0}
    :surface {:vertices [{:x 0.0 :y 0.0 :z 0.0}
                         {:x 120.0 :y 0.0 :z 0.0}
                         {:x 120.0 :y 80.0 :z 0.0}
@@ -228,10 +228,10 @@
   "ISA-like reference atmosphere with a mild gust corridor."
   {:frame :earth-fixed
    :fluid :air
-   :properties {:density 1.225
-                :dynamic-viscosity 1.81e-5
-                :temperature 288.15
-                :pressure 101325.0}
+   :properties {:density-kg-per-m3 1.225
+                :viscosity-pas 1.81e-5
+                :temperature-k 288.15
+                :pressure-pa 101325.0}
    :wind {:reference {:x 5.0 :y 0.5 :z 0.0}
           :gust-intensity 0.25
           :shear 0.08
@@ -245,10 +245,10 @@
   "Reference UAS platform identical across tests for determinism."
   {:id :quadrotor-reference
    :category :uas
-   :reference-length 0.45
-   :reference-area 0.20
-   :mass 6.2
-   :inertia {:ixx 0.32 :iyy 0.34 :izz 0.58}
+   :reference-length-m 0.45
+   :reference-area-m2 0.20
+   :mass-kg 6.2
+   :inertia {:ixx-kgm2 0.32 :iyy-kgm2 0.34 :izz-kgm2 0.58}
    :operating-regime {:reynolds [1.0e4 4.0e5]
                       :mach [0.0 0.25]}
    :metadata {:description "Small quadrotor used for urban canyon CFD fixtures"}})
@@ -283,11 +283,11 @@
   "Computes a characteristic fluid speed sqrt(2*pressure/density) for quick scaling heuristics."
   [{:keys [properties] :as environment}]
   (validate-environment! environment)
-  (let [{:keys [pressure density]} properties]
-    (Math/sqrt (Math/abs (/ (* 2.0 pressure) density)))))
+  (let [{:keys [pressure-pa density-kg-per-m3]} properties]
+    (Math/sqrt (Math/abs (/ (* 2.0 pressure-pa) density-kg-per-m3)))))
 
 (defn platform-state-vector
   "Returns the canonical state vector [mass, ref-length, ref-area] used by surrogates."
-  [{:keys [mass reference-length reference-area] :as platform}]
+  [{:keys [mass-kg reference-length-m reference-area-m2] :as platform}]
   (validate-platform! platform)
-  [mass reference-length reference-area])
+  [mass-kg reference-length-m reference-area-m2])

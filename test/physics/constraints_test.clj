@@ -5,7 +5,7 @@
 
 (deftest envelope-violations
   (let [model (dyn/fetch-model :asset/fixed-wing)
-        flight {:mach 0.95 :load-factor 9.0 :bank 70.0 :aoa 25.0}
+        flight {:mach 0.95 :load-factor-g 9.0 :bank-deg 70.0 :alpha-rad 25.0}
         violations (constraints/evaluate-envelope model flight)]
     (is (seq violations))
     (is (some #(= (:type %) :stall) violations))
@@ -13,7 +13,7 @@
 
 (deftest maritime-depth-limit
   (let [model (dyn/fetch-model :asset/submarine)
-        state {:depth 600.0}
+        state {:depth-m 600.0}
         violations (constraints/evaluate-depth model state)]
     (is (seq violations))
     (is (= :over-depth (:type (first violations))))))

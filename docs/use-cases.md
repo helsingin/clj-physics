@@ -15,8 +15,8 @@ Compute attenuation and phase shift with uncertainty over materials and field di
                        :orientation [0 0 1]}))
 (def material (m/->material {:name "soil"
                              :type :dielectric
-                             :permittivity-relative {:type :gaussian :mean 4.0 :sd 0.2}
-                             :conductivity {:type :uniform :min 0.01 :max 0.05}}))
+                             :permittivity-rel {:type :gaussian :mean 4.0 :sd 0.2}
+                             :conductivity-s-m {:type :uniform :min 0.01 :max 0.05}}))
 
 (p/propagate-monte-carlo field material 50.0 {:samples 200})
 ;; => stats for amplitude, attenuation, phase, valid sample count
@@ -41,7 +41,7 @@ Move between WGS84 geodetic, ECEF, and local ENU frames:
 (require '[physics.frames :as frames])
 
 (def origin {:position [37.62 -122.38 0.0]})
-(def target {:lat 37.63 :lon -122.40 :alt 50.0})
+(def target {:lat-deg 37.63 :lon-deg -122.40 :alt-m 50.0})
 (def ecef (frames/geodetic->ecef target))
 (def enu (frames/geodetic->enu origin target))
 ;; enu now gives local offsets relative to origin
@@ -81,7 +81,7 @@ Apply ground tire limits or maritime/subsurface drag/lift models:
          '[physics.models.common :as models]
          '[physics.environment :as env])
 
-(dyn/ground-forces models/ground-ugv {:terrain {:mu 0.7 :grade 0.1} :slip-angle 0.2})
+(dyn/ground-forces models/ground-ugv {:terrain {:mu 0.7 :grade 0.1} :slip-angle-rad 0.2})
 (dyn/maritime-forces models/maritime-usv {:velocity [5 0 0]} (env/ocean-profile {:depth 0}) {:rudder 0.1 :throttle 0.8})
 (dyn/subsurface-forces models/submarine {:velocity [3 0 0]} (env/ocean-profile {:depth 100}) {:rudder 0.1 :planes 0.05 :throttle 0.6})
 ```
@@ -129,7 +129,7 @@ Validate geometry/environment, run a surrogate, and apply a corrector for plume 
 (require '[physics.cfd.plume :as plume])
 
 (plume/predict {:geometry (plume/default-geometry)
-                :environment plume/default-environment
+                :environment (plume/default-environment)
                 :parameters {:source-strength 10.0}})
 ;; => flow field with corrected values and metadata
 ```
@@ -149,13 +149,13 @@ Register and use custom surrogate models with validation:
 ```clojure
 (require '[physics.cfd.surrogate :as s])
 
-(s/register! {:id :custom-plume :solver :plume
-              :metadata {:author "you" :version "0.1"}})
+(s/register-model! {:id :custom-plume :path "models/plume.onnx"
+                    :metadata {:author "you" :version "0.1"}})
 (s/list-models)
-(s/predict {:id :custom-plume
+(s/predict {:solver :plume
             :geometry (plume/default-geometry)
-            :environment plume/default-environment
-            :parameters {:source-strength 5.0}})
+            :environment (plume/default-environment)
+            :parameters {:emission-rate 5.0}})
 ```
 
 ## 13) EM Superposition & Power Density

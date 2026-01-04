@@ -26,28 +26,28 @@
   (* 0.5 rho (* speed speed)))
 
 (defn- aerodynamic-coefficients [model {:keys [alpha beta controls rates]}]
-  (let [{:keys [aero span chord]} model
+  (let [{:keys [aero span-m chord-m]} model
         {:keys [roll pitch yaw]} rates
         {:keys [aileron elevator rudder]} controls
         {:keys [cl0 cla cl-de cd0 cd2 cy-beta cy-dr cl-beta cl-da cl-dr cl-p cl-r cm0 cma cm-de cm-q cn-beta cn-da cn-dr cn-p cn-r]} aero
         cl (+ cl0 (* cla alpha) (* cl-de elevator))
         cd (+ cd0 (* cd2 cl cl))
         cy (+ (* cy-beta beta) (* cy-dr rudder))
-        pb (* 0.5 span roll)
-        rb (* 0.5 span yaw)
+        pb (* 0.5 span-m roll)
+        rb (* 0.5 span-m yaw)
         cl-moment (+ (* cl-beta beta) (* cl-da aileron) (* cl-dr rudder) (* cl-p pb) (* cl-r rb))
-        cm (+ cm0 (* cma alpha) (* cm-de elevator) (* cm-q (* 0.5 chord pitch)))
+        cm (+ cm0 (* cma alpha) (* cm-de elevator) (* cm-q (* 0.5 chord-m pitch)))
         cn (+ (* cn-beta beta) (* cn-da aileron) (* cn-dr rudder) (* cn-p pb) (* cn-r rb))]
     {:cl cl :cd cd :cy cy :cl-roll cl-moment :cm cm :cn cn}))
 
 (defn- gravity-body [model state g]
-  (let [mass (:mass model)
+  (let [mass (:mass-kg model)
         weight [0.0 0.0 (* -1.0 mass g)]
         Rib (inertial->body-matrix state)]
     (core/matmul Rib weight)))
 
 (defn- aerodynamic-forces [model state env controls]
-  (let [mass (:mass model)
+  (let [mass (:mass-kg model)
         [vx vy vz] (:velocity state)
         Rib (inertial->body-matrix state)
         v-body (core/matmul Rib [vx vy vz])
@@ -56,12 +56,12 @@
         [u v w] v-body
         alpha (math/atan2 w (max epsilon u))
         beta (math/asin (core/clamp (/ v (max epsilon speed)) -0.99 0.99))
-        rho (:density env)
+        rho (:density-kg-per-m3 env)
         q-bar (dynamic-pressure rho speed)
         controls (merge {:aileron 0.0 :elevator 0.0 :rudder 0.0 :throttle 0.0}
                         controls)
-        span (:span model)
-        chord (:chord model)
+        span (:span-m model)
+        chord (:chord-m model)
         [p q r] (or (:angular-rate state) [0.0 0.0 0.0])
         rates {:roll (if (pos? speed) (/ (* p span) (* 2.0 speed)) 0.0)
                :pitch (if (pos? speed) (/ (* q chord) (* 2.0 speed)) 0.0)
@@ -70,7 +70,7 @@
                                                 :beta beta
                                                 :controls controls
                                                 :rates rates})
-        S (:wing-area model)
+        S (:wing-area-m2 model)
         b span
         c chord
         lift (* (:cl coeffs) q-bar S)
@@ -97,10 +97,10 @@
   [model state env controls]
   (let [rho-env (or env (env/isa-profile (max 0.0 (nth (:position state) 2))))
         aero (aerodynamic-forces model state rho-env controls)
-        g (:gravity rho-env)
+        g (:gravity-m-s2 rho-env)
         weight (gravity-body model state g)
         throttle (core/clamp (:throttle controls 0.0) 0.0 1.0)
-        thrust-mag (* throttle (get-in model [:propulsion :max-thrust]))
+        thrust-mag (* throttle (get-in model [:propulsion :max-thrust-n]))
         thrust [thrust-mag 0.0 0.0]
         net-force (mapv + (:force aero) weight thrust)
         net-moment (:moment aero)]
@@ -117,20 +117,20 @@
   "Return time derivatives for a 6-DoF rigid body given state map and controls."
   [model state env controls]
   (let [forces (airframe-forces model state env controls)
-        mass (:mass model)
+        mass (:mass-kg model)
         inertia (:inertia model)
         [p q r] (or (:angular-rate state) [0.0 0.0 0.0])
         [L M N] (:net-torque forces)
-        {:keys [ixx iyy izz ixz]} inertia
-        ixz (or ixz 0.0)
-        a ixx
-        b iyy
+        {:keys [ixx-kgm2 iyy-kgm2 izz-kgm2 ixz-kgm2]} inertia
+        ixz (or ixz-kgm2 0.0)
+        a ixx-kgm2
+        b iyy-kgm2
         c (- ixz)
-        e izz
+        e izz-kgm2
         denom (- (* a e) (* c c))
-        inertia-matrix [[ixx 0.0 (- ixz)]
-                        [0.0 iyy 0.0]
-                        [(- ixz) 0.0 izz]]
+        inertia-matrix [[ixx-kgm2 0.0 (- ixz)]
+                        [0.0 iyy-kgm2 0.0]
+                        [(- ixz) 0.0 izz-kgm2]]
         inv-mat [[(/ e denom) 0.0 (/ (- c) denom)]
                  [0.0 (/ 1.0 b) 0.0]
                  [(/ (- c) denom) 0.0 (/ a denom)]]
@@ -151,16 +151,16 @@
 
 (defn ground-forces
   [model state]
-  (let [{:keys [mass]} model
+  (let [mass (:mass-kg model)
         mu (or (get-in state [:terrain :mu]) (get-in model [:tires :mu]))
-        grade (or (get-in state [:terrain :grade]) 0.0)
+        grade (or (get-in state [:terrain :grade-rad]) 0.0)
         g env/g0
         normal (* mass g (math/cos grade))
         max-lateral (* mu normal)
-        Cf (or (get-in model [:cornering :front]) 0.0)
-        Cr (or (get-in model [:cornering :rear]) 0.0)
-        slip-limit (or (get-in model [:limits :slip-angle]) 0.6)
-        slip (core/clamp (:slip-angle state 0.0) (- slip-limit) slip-limit)
+        Cf (or (get-in model [:cornering-n-per-rad :front]) 0.0)
+        Cr (or (get-in model [:cornering-n-per-rad :rear]) 0.0)
+        slip-limit (or (get-in model [:limits :slip-angle-rad]) 0.6)
+        slip (core/clamp (:slip-angle-rad state 0.0) (- slip-limit) slip-limit)
         Fy (core/clamp (- (+ (* Cf slip) (* Cr slip))) (- max-lateral) max-lateral)]
     {:lateral-force Fy
      :max-lateral-force max-lateral
@@ -170,46 +170,42 @@
 
 (defn maritime-forces
   [model state env controls]
-  (let [{:keys [density]} env
-        rho (or density 1025.0)
+  (let [{:keys [density-kg-per-m3]} env
+        rho (or density-kg-per-m3 1025.0)
         speed (core/magnitude (:velocity state))
         Cf (get-in model [:hull :drag-coefficient])
-        wetted (:wetted-area model)
+        wetted (:wetted-area-m2 model)
         drag (* 0.5 rho Cf wetted speed speed)
         rudder (:rudder model)
         rudder-def (core/clamp (:rudder controls 0.0) -0.4 0.4)
-        lift (* 0.5 rho (:lift-coefficient rudder) (:area rudder) speed speed rudder-def)
-        lever (:lever-arm rudder)
+        lift (* 0.5 rho (:lift-coefficient rudder) (:area-m2 rudder) speed speed rudder-def)
+        lever (:lever-arm-m rudder)
         throttle (core/clamp (:throttle controls 0.0) 0.0 1.0)
-        thrust (* throttle (get-in model [:propulsor :max-thrust]))]
+        thrust (* throttle (get-in model [:propulsor :max-thrust-n]))]
     {:drag drag
      :lift lift
-     :thrust thrust
      :yaw-moment (* lift lever)
-     :heave (* -0.02 drag)}))
-
-;; ---------- Sub-surface -----------------------------------------------------
+     :thrust thrust}))
 
 (defn subsurface-forces
   [model state env controls]
-  (let [rho (:density env)
+  (let [{:keys [density-kg-per-m3]} env
+        rho (or density-kg-per-m3 1025.0)
         speed (core/magnitude (:velocity state))
-        Cd (:drag-coef model)
-        area (* Math/PI (math/pow (/ (:beam model) 2.0) 2.0))
-        drag (* 0.5 rho Cd area speed speed)
+        drag (* 0.5 rho (:drag-coef model) (* (:length-m model) (:beam-m model)) speed speed)
         planes (:planes model)
         plane-def (core/clamp (:planes controls 0.0) -0.3 0.3)
-        lift (* 0.5 rho (:lift-coefficient planes) (:area planes) speed speed plane-def)
-        lever (:lever-arm planes)
+        lift (* 0.5 rho (:lift-coefficient planes) (:area-m2 planes) speed speed plane-def)
+        lever (:lever-arm-m planes)
         rudder (:rudder model)
         rudder-def (core/clamp (:rudder controls 0.0) -0.35 0.35)
-        yaw (* 0.5 rho (:lift-coefficient rudder) (:area rudder) speed speed rudder-def)
+        yaw (* 0.5 rho (:lift-coefficient rudder) (:area-m2 rudder) speed speed rudder-def)
         throttle (core/clamp (:throttle controls 0.0) 0.0 1.0)
-        thrust (* throttle (get-in model [:propulsor :max-thrust]))]
+        thrust (* throttle (get-in model [:propulsor :max-thrust-n]))]
     {:drag drag
      :lift lift
      :pitch-moment (* lift lever)
-     :yaw-moment (* yaw (:lever-arm rudder))
+     :yaw-moment (* yaw (:lever-arm-m rudder))
      :thrust thrust}))
 
 ;; ---------- Orbital dynamics -----------------------------------------------
@@ -219,9 +215,9 @@
   (let [[x y z] position
         [vx vy vz] velocity
         r (core/magnitude position)
-        mu (:mu body)
+        mu (:mu-m3-s2 body)
         j2 (:j2 body)
-        re (:radius body)
+        re (:radius-m body)
         grav-factor (/ mu (math/pow r 3))
         base (mapv #(* -1.0 grav-factor %) position)
         if-j2 (when (and perturbations? j2)

@@ -80,11 +80,11 @@
   [velocity geometry]
   (let [{:keys [resolution spacing dimensions]} geometry
         {:keys [nx ny nz]} resolution
-        {:keys [dx dy dz]} spacing
+        {:keys [dx-m dy-m dz-m]} spacing
         nz* (if (= dimensions 2) 1 (or nz 1))
-        inv2dx (/ 1.0 (* 2.0 dx))
-        inv2dy (/ 1.0 (* 2.0 dy))
-        inv2dz (when dz (/ 1.0 (* 2.0 dz)))
+        inv2dx (/ 1.0 (* 2.0 dx-m))
+        inv2dy (/ 1.0 (* 2.0 dy-m))
+        inv2dz (when dz-m (/ 1.0 (* 2.0 dz-m)))
         vol (canonical-volume velocity geometry)]
     (vec
      (for [k (range nz*)]
@@ -111,11 +111,11 @@
   [phi geometry]
   (let [{:keys [resolution spacing dimensions]} geometry
         {:keys [nx ny nz]} resolution
-        {:keys [dx dy dz]} spacing
+        {:keys [dx-m dy-m dz-m]} spacing
         nz* (if (= dimensions 2) 1 (or nz 1))
-        inv2dx (/ 1.0 (* 2.0 dx))
-        inv2dy (/ 1.0 (* 2.0 dy))
-        inv2dz (when dz (/ 1.0 (* 2.0 dz)))]
+        inv2dx (/ 1.0 (* 2.0 dx-m))
+        inv2dy (/ 1.0 (* 2.0 dy-m))
+        inv2dz (when dz-m (/ 1.0 (* 2.0 dz-m)))]
     (vec
      (for [k (range nz*)]
        (vec
@@ -141,12 +141,12 @@
   (let [^doubles src* src
         ^doubles dest* dest
         {:keys [dimensions nx-int ny-int nz-int]} spec
-        {:keys [dx dy dz]} spacing
+        {:keys [dx-m dy-m dz-m]} spacing
         two-d? (= dimensions 2)
         plane-size (* nx-int ny-int)
-        inv-dx2 (/ 1.0 (* dx dx))
-        inv-dy2 (/ 1.0 (* dy dy))
-        inv-dz2 (when (and (not two-d?) dz) (/ 1.0 (* dz dz)))
+        inv-dx2 (/ 1.0 (* dx-m dx-m))
+        inv-dy2 (/ 1.0 (* dy-m dy-m))
+        inv-dz2 (when (and (not two-d?) dz-m) (/ 1.0 (* dz-m dz-m)))
         planes (if two-d? 1 nz-int)]
     (dotimes [k planes]
       (dotimes [j ny-int]

@@ -20,28 +20,28 @@
 
 (defn geodetic->ecef
   "Convert geodetic coordinates (deg, deg, meters) to Earth-Centered, Earth-Fixed vector."
-  [{:keys [lat lon alt]}]
-  (let [lat-r (degrees->radians lat)
-        lon-r (degrees->radians lon)
+  [{:keys [lat-deg lon-deg alt-m]}]
+  (let [lat-r (degrees->radians lat-deg)
+        lon-r (degrees->radians lon-deg)
         sin-lat (math/sin lat-r)
         cos-lat (math/cos lat-r)
         sin-lon (math/sin lon-r)
         cos-lon (math/cos lon-r)
         N (/ wgs84-a (math/sqrt (- 1.0 (* wgs84-e2 (math/pow sin-lat 2)))))
-        x (* (+ N alt) cos-lat cos-lon)
-        y (* (+ N alt) cos-lat sin-lon)
-        z (* (+ (* (- 1.0 wgs84-e2) N) alt) sin-lat)]
+        x (* (+ N alt-m) cos-lat cos-lon)
+        y (* (+ N alt-m) cos-lat sin-lon)
+        z (* (+ (* (- 1.0 wgs84-e2) N) alt-m) sin-lat)]
     [x y z]))
 
 (defn- origin-terms [pose]
-  (let [[lat lon alt] (:position pose)
-        lat-r (degrees->radians lat)
-        lon-r (degrees->radians lon)
+  (let [[lat-deg lon-deg alt-m] (:position pose)
+        lat-r (degrees->radians lat-deg)
+        lon-r (degrees->radians lon-deg)
         sin-lat (math/sin lat-r)
         cos-lat (math/cos lat-r)
         sin-lon (math/sin lon-r)
         cos-lon (math/cos lon-r)
-        origin-ecef (geodetic->ecef {:lat lat :lon lon :alt alt})]
+        origin-ecef (geodetic->ecef {:lat-deg lat-deg :lon-deg lon-deg :alt-m alt-m})]
     {:lat-r lat-r
      :lon-r lon-r
      :sin-lat sin-lat
@@ -70,8 +70,8 @@
 
 (defn geodetic->enu
   "Return ENU pose of target with respect to origin pose (WGS84 inputs)."
-  [origin-pose {:keys [lat lon alt]}]
-  (let [target-ecef (geodetic->ecef {:lat lat :lon lon :alt alt})
+  [origin-pose {:keys [lat-deg lon-deg alt-m]}]
+  (let [target-ecef (geodetic->ecef {:lat-deg lat-deg :lon-deg lon-deg :alt-m alt-m})
         enu (ecef->enu origin-pose target-ecef)]
     (pose/->pose {:position enu
                   :frame :enu})))

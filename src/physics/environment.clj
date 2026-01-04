@@ -63,12 +63,12 @@
         viscosity (air-viscosity temperature)
         a (speed-of-sound temperature)
         gravity (gravity altitude)]
-    {:temperature (- temperature 273.15)
-     :pressure pressure
-     :density density
-     :viscosity viscosity
-     :speed-of-sound a
-     :gravity gravity}))
+    {:temperature-c (- temperature 273.15)
+     :pressure-pa pressure
+     :density-kg-per-m3 density
+     :viscosity-pas viscosity
+     :speed-of-sound-m-s a
+     :gravity-m-s2 gravity}))
 
 ;; --- Ocean model ---
 
@@ -108,14 +108,14 @@
 
 (defn ocean-profile
   "Return seawater properties at given depth (m) and optional lat."
-  [{:keys [depth lat]
-    :or {lat 0.0}}]
-  (let [depth (max 0.0 depth)
+  [{:keys [depth-m lat-deg]
+    :or {lat-deg 0.0}}]
+  (let [depth (max 0.0 depth-m)
         temperature (potential-temperature depth)
-        salinity (if (< (Math/abs lat) 30.0) 35.0 34.0)
+        salinity (if (< (Math/abs lat-deg) 30.0) 35.0 34.0)
         pressure (+ 101325.0 (* g0 depth 1025.0))
         density (seawater-density temperature salinity pressure)]
-    {:temperature temperature
-     :salinity salinity
-     :pressure pressure
-     :density density}))
+    {:temperature-c temperature
+     :salinity-psu salinity
+     :pressure-pa pressure
+     :density-kg-per-m3 density}))

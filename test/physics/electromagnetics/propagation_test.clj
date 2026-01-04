@@ -40,15 +40,15 @@
 
 (deftest conductive-medium-attenuates
   (let [material (materials/->material {:type :dielectric
-                                        :permittivity-relative 80.0
-                                        :permeability-relative 1.0
-                                        :conductivity 4.0})
+                                        :permittivity-rel 80.0
+                                        :permeability-rel 1.0
+                                        :conductivity-s-m 4.0})
         freq 1.0e6
         alpha (propagation/attenuation-constant material freq)
         beta (propagation/phase-constant material freq)
         ε (materials/absolute-permittivity material)
         μ (materials/absolute-permeability material)
-        σ (:material/conductivity material)
+        σ (:material/conductivity-s-m material)
         ω (* 2.0 Math/PI freq)
         ωc (emath/complex ω 0.0)
         μc (emath/complex μ 0.0)
@@ -80,7 +80,7 @@
         (fields/->field {:type :electric
                          :frequency-hz 0.0
                          :amplitude 1.0})
-        (materials/->material {:name "conductor" :conductivity 1.0})
+        (materials/->material {:name "conductor" :conductivity-s-m 1.0})
         1.0))))
 
 (deftest monte-carlo-summaries
@@ -88,8 +88,8 @@
                                :frequency-hz 1.0e9
                                :amplitude {:type :gaussian :mean 5.0 :sd 0.1}})
         material (materials/->material {:type :dielectric
-                                        :permittivity-relative {:type :gaussian :mean 2.0 :sd 0.05}
-                                        :conductivity {:type :uniform :min 0.1 :max 0.2}})
+                                        :permittivity-rel {:type :gaussian :mean 2.0 :sd 0.05}
+                                        :conductivity-s-m {:type :uniform :min 0.1 :max 0.2}})
         {:keys [amplitude attenuation-db] :as result}
         (propagation/propagate-monte-carlo field material 5.0 {:samples 50 :rng (java.util.Random. 7)})]
     (is (= 50 (:samples result)))

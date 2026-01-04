@@ -7,7 +7,7 @@
 (deftest geodetic->enu
   (let [origin (pose/->pose {:position [37.7749 -122.4194 0.0]
                              :frame :wgs84})
-        target {:lat 37.7750 :lon -122.4190 :alt 120.0}
+        target {:lat-deg 37.7750 :lon-deg -122.4190 :alt-m 120.0}
         result (frames/geodetic->enu origin target)]
     (is (= :enu (:frame result)))
     (is (<= 0.0 (first (:position result))))

@@ -20,17 +20,17 @@
 (deftest ground-vehicle-traction
   (let [model (dyn/fetch-model :asset/ugv)
         state {:velocity [15 0 0]
-               :slip-angle 0.1
-               :terrain {:mu 0.7 :grade 0.05}}
+               :slip-angle-rad 0.1
+               :terrain {:mu 0.7 :grade-rad 0.05}}
         result (dyn/ground-forces model state)]
     (is (<= (Math/abs (:lateral-force result)) (:max-lateral-force result)))))
 
 (deftest maritime-hydrodynamics
   (let [model (dyn/fetch-model :asset/usv)
         state {:velocity [5 0 0]
-               :depth 0.0
+               :depth-m 0.0
                :sea-state 3}
-        env (env/ocean-profile {:depth 5.0 :lat 30.0})
+        env (env/ocean-profile {:depth-m 5.0 :lat-deg 30.0})
         forces (dyn/maritime-forces model state env {:rudder 0.1 :throttle 0.6})]
     (is (number? (:drag forces)))
     (is (number? (:lift forces)))))

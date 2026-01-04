@@ -14,9 +14,9 @@
    :type :cartesian-grid
    :dimensions 3
    :origin {:x 0.0 :y 0.0 :z 0.0}
-   :extent {:lx 200.0 :ly 200.0 :lz 120.0}
+   :extent {:lx-m 200.0 :ly-m 200.0 :lz-m 120.0}
    :resolution {:nx 40 :ny 40 :nz 24}
-   :spacing {:dx 5.0 :dy 5.0 :dz 5.0}})
+   :spacing {:dx-m 5.0 :dy-m 5.0 :dz-m 5.0}})
 
 (defn- validate-geometry!
   [geometry]
@@ -28,14 +28,14 @@
       (throw (ex-info "Plume helper requires 3D geometry"
                       {:dimensions (:dimensions geom)})))
     (let [nz (get-in geom [:resolution :nz])
-          dz (get-in geom [:spacing :dz])
-          lz (get-in geom [:extent :lz])]
+          dz (get-in geom [:spacing :dz-m])
+          lz (get-in geom [:extent :lz-m])]
       (when (or (nil? nz) (< nz 2))
         (throw (ex-info "Resolution must include nz >= 2" {:resolution (:resolution geom)})))
       (when (or (nil? dz) (<= dz 0.0))
-        (throw (ex-info "Spacing must include dz > 0" {:spacing (:spacing geom)})))
+        (throw (ex-info "Spacing must include dz-m > 0" {:spacing (:spacing geom)})))
       (when (or (nil? lz) (<= lz 0.0))
-        (throw (ex-info "Extent must include positive :lz" {:extent (:extent geom)}))))
+        (throw (ex-info "Extent must include positive :lz-m" {:extent (:extent geom)}))))
     geom))
 
 (defn predict

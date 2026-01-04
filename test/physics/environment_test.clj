@@ -9,14 +9,14 @@
 (deftest isa-standard-atmosphere
   (testing "sea level density"
     (let [profile (env/isa-profile 0.0)]
-      (is (approx= 1.225 (:density profile) 1e-3))
-      (is (approx= 101325.0 (:pressure profile) 10.0))))
+      (is (approx= 1.225 (:density-kg-per-m3 profile) 1e-3))
+      (is (approx= 101325.0 (:pressure-pa profile) 10.0))))
   (testing "tropopause transition"
     (let [profile (env/isa-profile 11000.0)]
-      (is (approx= 0.3639 (:density profile) 1e-3))
-      (is (approx= -56.5 (:temperature profile) 0.5)))))
+      (is (approx= 0.3639 (:density-kg-per-m3 profile) 1e-3))
+      (is (approx= -56.5 (:temperature-c profile) 0.5)))))
 
 (deftest ocean-profile
-  (let [profile (env/ocean-profile {:depth 200.0 :lat 34.0})]
-    (is (<= (:density profile) 1050.0))
-    (is (>= (:density profile) 1020.0))))
+  (let [profile (env/ocean-profile {:depth-m 200.0 :lat-deg 34.0})]
+    (is (<= (:density-kg-per-m3 profile) 1050.0))
+    (is (>= (:density-kg-per-m3 profile) 1020.0))))

@@ -9,7 +9,7 @@
   [material frequency-hz]
   (let [ε (materials/absolute-permittivity material)
         μ (materials/absolute-permeability material)
-        σ (:material/conductivity material)
+        σ (:material/conductivity-s-m material)
         ω (* 2.0 math/PI frequency-hz)]
     (when (zero? ω)
       (throw (ex-info "Propagation constant undefined for zero frequency"
@@ -137,13 +137,13 @@
                              fallback)))]
                  (let [sigma-dist (:material/sigma-distribution mat)
                        perm-dist (:material/permittivity-distribution mat)
-                       cond (draw sigma-dist (:material/conductivity mat))
-                       perm (draw perm-dist (:material/permittivity-relative mat))
+                       cond (draw sigma-dist (:material/conductivity-s-m mat))
+                       perm (draw perm-dist (:material/permittivity-rel mat))
                        base (materials/->material {:name (:material/name mat)
                                                    :type (:material/type mat)
-                                                   :permittivity-relative perm
-                                                   :permeability-relative (:material/permeability-relative mat)
-                                                   :conductivity cond
+                                                   :permittivity-rel perm
+                                                   :permeability-rel (:material/permeability-rel mat)
+                                                   :conductivity-s-m cond
                                                    :loss-tangent (:material/loss-tangent mat)
                                                    :tunable (:material/tunable mat)})]
                    (assoc base

@@ -40,7 +40,7 @@ Pull from Clojars:
 
 ```clojure
 ;; deps.edn
-net.clojars.helsingin/physics {:mvn/version "0.1.1"}
+net.clojars.helsingin/physics {:mvn/version "0.1.4"}
 ```
 
 ## Quick Start
@@ -55,12 +55,12 @@ net.clojars.helsingin/physics {:mvn/version "0.1.1"}
 
 ;; 1. Build a field and propagate it
 (def field (f/->field {:type :electric :frequency-hz 2.4e9 :amplitude 1.0 :orientation [0 0 1]}))
-(def air (m/->material {:name "air" :type :dielectric :permittivity-relative 1.0006 :conductivity 0.0}))
+(def air (m/->material {:name "air" :type :dielectric :permittivity-rel 1.0006 :conductivity-s-m 0.0}))
 (p/propagate-plane-wave field air 100.0)
 
 ;; 2. Frame transforms (WGS84 <-> ECEF)
 (def origin {:position [37.62 -122.38 0.0]})
-(frames/geodetic->ecef {:lat 37.62 :lon -122.38 :alt 0.0})
+(frames/geodetic->ecef {:lat-deg 37.62 :lon-deg -122.38 :alt-m 0.0})
 
 ;; 3. Dynamics: compute derivatives for a fixed-wing state
 (def model (physics.models.common/fixed-wing))

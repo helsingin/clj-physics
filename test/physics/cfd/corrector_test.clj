@@ -11,7 +11,7 @@
       (assoc :type :cartesian-grid
              :dimensions 3
              :resolution {:nx 18 :ny 14 :nz 6}
-             :spacing {:dx 1.5 :dy 1.5 :dz 1.2})))
+             :spacing {:dx-m 1.5 :dy-m 1.5 :dz-m 1.2})))
 
 (defn- cartesian-geometry-2d
   []
@@ -19,9 +19,9 @@
    :type :cartesian-grid
    :dimensions 2
    :origin {:x -20.0 :y -12.0}
-   :extent {:lx 40.0 :ly 24.0}
+   :extent {:lx-m 40.0 :ly-m 24.0}
    :resolution {:nx 48 :ny 30}
-   :spacing {:dx (/ 40.0 47) :dy (/ 24.0 29)}})
+   :spacing {:dx-m (/ 40.0 47) :dy-m (/ 24.0 29)}})
 
 (defn- velocity-volume
   [velocity geometry]
@@ -33,11 +33,11 @@
   [velocity geometry]
   (let [{:keys [resolution spacing]} geometry
         {:keys [nx ny nz]} resolution
-        {:keys [dx dy dz]} spacing
+        {:keys [dx-m dy-m dz-m]} spacing
         nz* (or nz 1)
-        inv2dx (/ 1.0 (* 2.0 dx))
-        inv2dy (/ 1.0 (* 2.0 dy))
-        inv2dz (when dz (/ 1.0 (* 2.0 dz)))
+        inv2dx (/ 1.0 (* 2.0 dx-m))
+        inv2dy (/ 1.0 (* 2.0 dy-m))
+        inv2dz (when dz-m (/ 1.0 (* 2.0 dz-m)))
         vol (velocity-volume velocity geometry)]
     (vec
      (for [k (range nz*)]
