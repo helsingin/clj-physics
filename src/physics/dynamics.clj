@@ -57,7 +57,7 @@
         alpha (math/atan2 w (max epsilon u))
         beta (math/asin (core/clamp (/ v (max epsilon speed)) -0.99 0.99))
         rho (:density env)
-        q (dynamic-pressure rho speed)
+        q-bar (dynamic-pressure rho speed)
         controls (merge {:aileron 0.0 :elevator 0.0 :rudder 0.0 :throttle 0.0}
                         controls)
         span (:span model)
@@ -73,20 +73,20 @@
         S (:wing-area model)
         b span
         c chord
-        lift (* (:cl coeffs) q S)
-        drag (* (:cd coeffs) q S)
-        side (* (:cy coeffs) q S)
+        lift (* (:cl coeffs) q-bar S)
+        drag (* (:cd coeffs) q-bar S)
+        side (* (:cy coeffs) q-bar S)
         sin-a (math/sin alpha)
         cos-a (math/cos alpha)
         fx (+ (- (* drag cos-a)) (* lift sin-a))
         fz (+ (- (* drag sin-a)) (- (* lift cos-a)))
         fy side
-        l (* (:cl-roll coeffs) q S b)
-        m (* (:cm coeffs) q S c)
-        n (* (:cn coeffs) q S b)]
+        l (* (:cl-roll coeffs) q-bar S b)
+        m (* (:cm coeffs) q-bar S c)
+        n (* (:cn coeffs) q-bar S b)]
     {:force [fx fy fz]
      :moment [l m n]
-     :dynamic-pressure q
+     :dynamic-pressure q-bar
      :alpha alpha
      :beta beta
      :speed speed
@@ -95,7 +95,7 @@
 (defn airframe-forces
   "Compute aerodynamic, thrust, and weight forces for a fixed-wing platform."
   [model state env controls]
-  (let [rho-env (or env (env/isa-profile (max 0.0 (- (nth (:position state) 2)))))
+  (let [rho-env (or env (env/isa-profile (max 0.0 (nth (:position state) 2))))
         aero (aerodynamic-forces model state rho-env controls)
         g (:gravity rho-env)
         weight (gravity-body model state g)

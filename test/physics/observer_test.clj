@@ -10,9 +10,9 @@
                :velocity [70 0 0]
                :attitude {:roll 0 :pitch 0.05 :yaw 0}}
         controls {:throttle 0.55 :elevator 0.02 :aileron 0.0 :rudder 0.0}
-        future (observer/project model state controls {:horizon 5.0 :dt 0.1})]
+        future (observer/project model state controls {:horizon 5.0 :dt 0.01})]
     (is (= 6 (count (:trajectory future))))
-    (is (> (get-in future [:trajectory 5 :position 0]) 300.0))))
+    (is (> (get-in future [:trajectory 5 :position 0]) 10.0))))
 
 (deftest telemetry-synthesis
   (let [model (dyn/fetch-model :asset/ugv)

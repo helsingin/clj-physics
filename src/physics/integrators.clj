@@ -139,5 +139,8 @@
               (recur new-t (* h factor) new-state new-hist (conj! step-hist h)))
             (let [factor (-> (* safety (math/pow (max err-norm 1e-12) -0.25))
                              (max min-factor)
-                             (min max-factor))]
-              (recur t (* h factor) state hist step-hist))))))))
+                             (min max-factor))
+                  new-h (* h factor)]
+              (when (< new-h 1.0e-15)
+                (throw (ex-info "Integrator step size underflow" {:t t :h new-h :error err-norm})))
+              (recur t new-h state hist step-hist))))))))

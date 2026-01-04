@@ -14,7 +14,7 @@
 
 (set! *warn-on-reflection* true)
 
-(def ^:private sqrt-two-pi (Math/sqrt (* 2.0 Math/PI)))
+(def ^:private two-pi (* 2.0 Math/PI))
 
 (defonce ^:private model-registry (atom {}))
 
@@ -127,7 +127,7 @@
                    exp-y (math/exp (/ (* -1.0 (- py y) (- py y)) (* 2 sigma-y sigma-y)))
                    exp-z (math/exp (/ (* -1.0 (- pz z) (- pz z)) (* 2 sigma-z sigma-z)))
                    conc (double (/ (* emission-rate exp-y exp-z)
-                                   (* wind-speed sigma-y sigma-z sqrt-two-pi)))]
+                                   (* wind-speed sigma-y sigma-z two-pi)))]
                conc)))))))))
 
 (defn- sinusoidal-wave-field
