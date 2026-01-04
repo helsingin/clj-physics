@@ -16,7 +16,12 @@ An idiomatic Clojure toolkit for multi-domain physics modeling. It brings togeth
 - Electromagnetics: robust complex math, materials, fields, propagation, constraints (`physics.electromagnetics.*`).
 
 ## Install
-Add this library to your `deps.edn` via its git URL and tag/SHA when you publish it.
+Pull from Clojars:
+
+```clojure
+;; deps.edn
+net.clojars.helsingin/physics {:mvn/version "<latest from https://clojars.org/net.clojars.helsingin/physics>"}
+```
 
 ## Quick Start
 ```clojure
@@ -50,6 +55,10 @@ Add this library to your `deps.edn` via its git URL and tag/SHA when you publish
 clojure -M:test
 ```
 Tests cover core math, frames, environment, dynamics, constraints, integrators, observer, CFD, electromagnetics, and spatial utilities. A default `tests.edn` is included for Kaocha with a pinned seed.
+
+## Build and release
+- Build the jar: `clojure -T:build jar`
+- Deploy to Clojars: `make deploy` (reads credentials from `~/.m2/settings.xml` server `clojars`, or falls back to `CLOJARS_USERNAME`/`CLOJARS_PASSWORD` if exported)
 
 ## Logging
 A simple logback config lives in `dev/logback.xml`. SLF4J binding is pulled in test/dev via the `:test` alias; production users can supply their own binding or exclude it.

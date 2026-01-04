@@ -1,8 +1,14 @@
-{:paths ["src" "dev"]
+{:paths ["src"]
  :deps {org.clojure/clojure {:mvn/version "1.11.1"}
         metosin/malli {:mvn/version "0.13.0"}
         org.clojure/tools.logging {:mvn/version "1.2.4"}}
+ :mvn/repos {"central" {:url "https://repo1.maven.org/maven2/"}
+             "clojars" {:url "https://repo.clojars.org/"}}
  :aliases {:test {:extra-paths ["test" "dev"]
                   :extra-deps {lambdaisland/kaocha {:mvn/version "1.88.1376"}
                                ch.qos.logback/logback-classic {:mvn/version "1.4.14"}}
-                  :main-opts ["-m" "kaocha.runner"]}}}
+                  :main-opts ["-m" "kaocha.runner"]}
+           :build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.3"}}
+                   :ns-default build}
+           :deploy {:deps {slipset/deps-deploy {:mvn/version "0.2.2"}}
+                    :ns-default deps-deploy.deps-deploy}}}
