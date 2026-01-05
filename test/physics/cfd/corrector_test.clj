@@ -90,6 +90,51 @@
                      flow-field
                      opts))
 
+(defn- resolve-private
+  [sym]
+  (or (ns-resolve 'physics.cfd.corrector sym)
+      (throw (ex-info "Missing private var" {:sym sym}))))
+
+(deftest flatten-roundtrips
+  (let [geom (cartesian-geometry-3d)
+        velocity-2d [[{:u 1.0 :v 2.0 :w 3.0} {:u -1.0 :v -2.0 :w -3.0}]]
+        vol ((resolve-private 'canonical-volume) velocity-2d {:dimensions 2})
+        flat-vel ((resolve-private 'flatten-velocity) vol {:dimensions 2} {:nx 2 :ny 1 :nz 1})
+        roundtrip ((resolve-private 'unflatten-vector-volume)
+                   (:u flat-vel) (:v flat-vel) (:w flat-vel)
+                   {:dimensions 2} {:nx 2 :ny 1 :nz 1})
+        scalar [[[1.0 2.0] [3.0 4.0]]]
+        scalar-flat ((resolve-private 'flatten-scalar) scalar {:dimensions 2} {:nx 2 :ny 2 :nz 1})
+        scalar-rt ((resolve-private 'unflatten-scalar-volume) scalar-flat {:dimensions 2} {:nx 2 :ny 2 :nz 1})]
+    (testing "velocity flatten/unflatten round-trip"
+      (is (= vol roundtrip)))
+    (testing "scalar flatten/unflatten round-trip"
+      (is (= scalar scalar-rt)))))
+
+(deftest divergence-and-gradient-shape
+  (let [geometry (cartesian-geometry-3d)
+        vel ((resolve-private 'zero-vector-volume) geometry)
+        div ((resolve-private 'divergence) vel geometry)
+        phi (vec (repeat 6 (vec (repeat 14 (vec (repeat 18 1.0))))))
+        grad ((resolve-private 'gradient-volume) phi geometry)]
+    (testing "divergence shape matches geometry"
+      (is (= (get-in geometry [:resolution :nz]) (count div)))
+      (is (= (get-in geometry [:resolution :ny]) (count (first div))))
+      (is (= (get-in geometry [:resolution :nx]) (count (ffirst div)))))
+    (testing "gradient shape matches geometry"
+      (is (= (get-in geometry [:resolution :nz]) (count grad)))
+      (is (= (get-in geometry [:resolution :ny]) (count (first grad))))
+      (is (= (get-in geometry [:resolution :nx]) (count (ffirst grad)))))))
+
+(deftest solve-poisson-parallel-matches-serial-on-zero-divergence
+  (let [geometry (cartesian-geometry-3d)
+        zero-div (vec (repeat 6 (vec (repeat 14 (vec (repeat 18 0.0))))))
+        solve (resolve-private 'solve-poisson)
+        phi-serial (solve zero-div geometry 2 {:parallel? false})
+        phi-parallel (solve zero-div geometry 2 {:parallel? true})]
+    (testing "zero divergence yields identical potentials serial vs parallel"
+      (is (= phi-serial phi-parallel)))))
+
 (deftest helmholtz-projection-reduces-divergence
   (let [geometry (cartesian-geometry-3d)
         {:keys [flow-field]} (surrogate/predict {:solver :potential-flow
