@@ -20,9 +20,10 @@ This document outlines the development trajectory for `clj-physics`.
 - [x] Add runtime malli validation to `physics.electromagnetics`.
 - [x] Standardize contribution guidelines in `CONTRIBUTING.md`.
 
-## Future Considerations
-### State Estimation (v0.2.0)
-- **EKF (Extended Kalman Filter):** Implement standard estimators using the existing `rigid-body-derivatives` for the Jacobian.
+## Completed in v0.2.0
+### State Estimation
+- [x] **EKF (Extended Kalman Filter):** Implement standard estimators using the existing `rigid-body-derivatives` for the Jacobian.
 
-### Performance
+## Completed in v0.1.5
+### Polish & Schema Enforcement
 - **SIMD/Vectorization:** Port the CFD Poisson solver (`physics.cfd.corrector`) to `dtype-next` or `tech.ml.dataset` for large-grid performance.
