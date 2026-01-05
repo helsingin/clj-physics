@@ -123,7 +123,35 @@ Forward-project a vehicle state under fixed controls and generate synthetic tele
 (obs/synthesise-telemetry model state {:rate 5 :duration 5.0 :controls {:throttle 0.6}})
 ```
 
-## 10) CFD Surrogate + Corrector
+## 10) Extended Kalman Filter (EKF) State Estimation
+Estimate true state from noisy GPS/IMU measurements using a 6-DOF physics prior:
+```clojure
+(require '[physics.observer.ekf :as ekf]
+         '[physics.math.linear :as lin]
+         '[physics.models.common :as models])
+
+(def model models/fixed-wing)
+(def initial-guess {:position [0 0 1000] :velocity [60 0 0] :orientation [1 0 0 0] :angular-rate [0 0 0]})
+(def P (lin/identity-mat 13)) ;; Initial covariance
+(def Q (lin/scalar-mul (lin/identity-mat 13) 0.01)) ;; Process noise
+(def R (lin/identity-mat 3)) ;; Measurement noise (GPS X/Y/Z)
+
+;; 1. Predict (Forward propagate state and covariance)
+(def pred (ekf/predict {:state-est initial-guess
+                        :covariance P
+                        :model model
+                        :controls {:throttle 0.5}
+                        :dt 0.1 :Q Q}))
+
+;; 2. Update (Correct using GPS measurement Z at t=0.1)
+(def H (lin/zeros 3 13)) ;; Matrix mapping state (13) to measurement (3)
+;; Set H[0,0]=1, H[1,1]=1, H[2,2]=1 to observe Position X,Y,Z
+(def measurement [10.0 5.0 1002.0])
+(ekf/update-step pred H measurement R)
+;; => {:state-est ... :covariance ... :innovation ...}
+```
+
+## 11) CFD Surrogate + Corrector
 Validate geometry/environment, run a surrogate, and apply a corrector for plume or maritime flows:
 ```clojure
 (require '[physics.cfd.plume :as plume])
@@ -134,7 +162,7 @@ Validate geometry/environment, run a surrogate, and apply a corrector for plume 
 ;; => flow field with corrected values and metadata
 ```
 
-## 11) Debris / Maritime / Shallow-Water Helpers
+## 12) Debris / Maritime / Shallow-Water Helpers
 High-level wrappers for shallow-water grids and debris dispersion:
 ```clojure
 (require '[physics.cfd.maritime :as maritime]
@@ -144,7 +172,7 @@ High-level wrappers for shallow-water grids and debris dispersion:
 (debris/predict {:parameters {:release-rate 2.0 :buoyancy 0.8}})
 ```
 
-## 12) Surrogate Model Registry
+## 13) Surrogate Model Registry
 Register and use custom surrogate models with validation:
 ```clojure
 (require '[physics.cfd.surrogate :as s])
@@ -158,7 +186,7 @@ Register and use custom surrogate models with validation:
             :parameters {:emission-rate 5.0}})
 ```
 
-## 13) EM Superposition & Power Density
+## 14) EM Superposition & Power Density
 Phasor superposition with safety checks:
 ```clojure
 (require '[physics.electromagnetics.fields :as f]
@@ -170,7 +198,7 @@ Phasor superposition with safety checks:
 (f/power-density sum m/vacuum)
 ```
 
-## 14) Spatial Geometry/Topology Utilities
+## 15) Spatial Geometry/Topology Utilities
 Basic pose normalization and topology helpers:
 ```clojure
 (require '[physics.spatial.pose :as pose]

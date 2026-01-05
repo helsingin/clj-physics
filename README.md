@@ -34,6 +34,11 @@ A complete 6-Degrees-of-Freedom (6-DOF) simulation stack.
 *   **Platform Models:** Validated models for **Fixed-Wing Aircraft**, **UGVs**, **USVs**, and **Submarines**.
 *   **Environment:** High-fidelity WGS84 coordinate transforms, **1976 US Standard Atmosphere** (up to 86km), and **UNESCO 1983 Ocean Equation of State**.
 
+### 🧠 State Estimation (EKF)
+A guidance and navigation toolkit for noisy systems.
+*   **Numerical Jacobian:** Automatic differentiation of 6-DOF dynamics.
+*   **Extended Kalman Filter:** Generic Predict/Update implementation for fusing noisy telemetry (position/velocity) with a physics-based prior to recover true state and covariance.
+
 ## Install
 
 Pull the latest version from [Clojars](https://clojars.org/net.clojars.helsingin/physics):
