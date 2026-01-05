@@ -3,9 +3,28 @@
   (:require [clojure.math :as math]
             [physics.core :as pcore]
             [physics.electromagnetics.materials :as materials]
-            [physics.electromagnetics.math :as emath]))
+            [physics.electromagnetics.math :as emath]
+            [malli.core :as m]
+            [malli.error :as me]))
+
+(defn- validate!
+  [schema value label]
+  (if (m/validate schema value)
+    value
+    (throw (ex-info (str "Invalid " label)
+                    {:errors (me/humanize (m/explain schema value))
+                     :value value
+                     :schema schema}))))
 
 (def ^:private orientation-tolerance-rad 1.0e-3)
+
+(def FieldDescriptor
+  [:map
+   [:type [:enum :electric :magnetic]]
+   [:frequency-hz number?]
+   [:amplitude number?]
+   [:orientation {:optional true} [:vector {:min 3 :max 3} number?]]
+   [:phase-deg {:optional true} number?]])
 
 (defn- wrap-phase [deg]
   (let [wrapped (mod deg 360.0)]
@@ -26,12 +45,19 @@
   "Normalise a field descriptor. Keys (keywords) are namespaced with :field/.
    Supports amplitude/phase distributions for stochastic modelling."
   [{:keys [type frequency-hz amplitude orientation phase-deg polarization meta amplitude-distribution phase-distribution]
+    :as descriptor
     :or {type :electric
          frequency-hz 0.0
          amplitude 0.0
          orientation [0.0 0.0 1.0]
          phase-deg 0.0}}]
-  (let [orientation (pcore/normalize orientation)
+  (let [_ (when-not (or amplitude-distribution
+                        phase-distribution
+                        (map? amplitude)
+                        (map? phase-deg))
+            ;; Only validate basic scalar fields strictly; distributions are looser
+            (validate! FieldDescriptor descriptor "field descriptor"))
+        orientation (pcore/normalize orientation)
         amp-dist (or amplitude-distribution (normalise-distribution amplitude))
         amp (if (map? amplitude)
               (or (:mean amplitude) (:value amplitude) (:mid amplitude) 0.0)

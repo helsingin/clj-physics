@@ -27,7 +27,8 @@
 
 (deftest maritime-hydrodynamics
   (let [model (dyn/fetch-model :asset/usv)
-        state {:velocity [5 0 0]
+        state {:position [0 0 0]
+               :velocity [5 0 0]
                :depth-m 0.0
                :sea-state 3}
         env (env/ocean-profile {:depth-m 5.0 :lat-deg 30.0})

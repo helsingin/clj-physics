@@ -2,17 +2,23 @@
 
 This document outlines the development trajectory for `clj-physics`.
 
-## v0.1.4 (In Progress)
+## Completed in v0.1.4
 ### 1. Unified Units of Measure
 **Goal:** Explicitly suffix keys with units to strictly enforce SI conventions and prevent conversion errors.
-- [ ] Rename schema keys in `physics.cfd.core` (e.g., `:dx` -> `:dx-m`).
-- [ ] Update platform models in `physics.models.common` (e.g., `:mass` -> `:mass-kg`).
-- [ ] Update EM propagation signatures.
+- [x] Rename schema keys in `physics.cfd.core` (e.g., `:dx` -> `:dx-m`).
+- [x] Update platform models in `physics.models.common` (e.g., `:mass` -> `:mass-kg`).
+- [x] Update EM propagation signatures.
 
 ### 2. Integrator Event Detection
 **Goal:** Allow simulations to stop exactly when a physical condition is met (e.g., altitude <= 0).
-- [ ] Add `:events` predicate support to `physics.integrators/rk4` and `rkf45`.
-- [ ] Implement linear interpolation for precise event time isolation.
+- [x] Add `:events` predicate support to `physics.integrators/rk4` and `rkf45`.
+- [x] Implement linear interpolation for precise event time isolation.
+
+## v0.1.5 (In Progress)
+### Polish & Schema Enforcement
+- [ ] Add runtime malli validation to `physics.dynamics`.
+- [ ] Add runtime malli validation to `physics.electromagnetics`.
+- [ ] Standardize contribution guidelines in `CONTRIBUTING.md`.
 
 ## Future Considerations
 ### State Estimation (v0.2.0)

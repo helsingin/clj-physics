@@ -2,6 +2,8 @@
 
 This library uses a single source of truth for versions (`version.txt`) and keeps `pom.xml`/JARs in sync via `make` + tools.build.
 
+See [CONTRIBUTING.md](../CONTRIBUTING.md) for versioning rules.
+
 ## Prerequisites
 - Clojure CLI installed.
 - Python 3 available (used in `Makefile`).

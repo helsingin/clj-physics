@@ -3,7 +3,72 @@
   (:require [clojure.math :as math]
             [physics.core :as core]
             [physics.environment :as env]
-            [physics.models.common :as models]))
+            [physics.models.common :as models]
+            [malli.core :as m]
+            [malli.error :as me]))
+
+(defn- validate!
+  [schema value label]
+  (if (m/validate schema value)
+    value
+    (throw (ex-info (str "Invalid " label)
+                    {:errors (me/humanize (m/explain schema value))
+                     :value value
+                     :schema schema}))))
+
+;; ---------------------------------------------------------------------------
+;; Schemas
+;; ---------------------------------------------------------------------------
+
+(def ^:private positive-double [:fn #(and (number? %) (pos? %))])
+(def ^:private non-neg-double [:fn #(and (number? %) (>= % 0.0))])
+
+(def AirframeModel
+  [:map
+   [:mass-kg positive-double]
+   [:wing-area-m2 positive-double]
+   [:span-m positive-double]
+   [:chord-m positive-double]
+   [:inertia [:map
+              [:ixx-kgm2 positive-double]
+              [:iyy-kgm2 positive-double]
+              [:izz-kgm2 positive-double]]]])
+
+(def GroundModel
+  [:map
+   [:mass-kg positive-double]
+   [:tires {:optional true} [:map [:mu non-neg-double]]]])
+
+(def MaritimeModel
+  [:map
+   [:wetted-area-m2 positive-double]
+   [:hull [:map [:drag-coefficient non-neg-double]]]
+   [:propulsor {:optional true} [:map [:max-thrust-n non-neg-double]]]])
+
+(def SubsurfaceModel
+  [:map
+   [:drag-coef non-neg-double]
+   [:length-m positive-double]
+   [:beam-m positive-double]])
+
+(def OrbitalBody
+  [:map
+   [:mu-m3-s2 positive-double]
+   [:radius-m positive-double]])
+
+(def State
+  [:map
+   [:position [:vector {:min 3 :max 3} number?]]
+   [:velocity [:vector {:min 3 :max 3} number?]]
+   [:orientation {:optional true} [:vector {:min 4 :max 4} number?]]
+   [:angular-rate {:optional true} [:vector {:min 3 :max 3} number?]]])
+
+(def Environment
+  [:map
+   [:density-kg-per-m3 non-neg-double]
+   [:gravity-m-s2 {:optional true} non-neg-double]])
+
+;; ---------------------------------------------------------------------------
 
 (defn fetch-model [id]
   (models/fetch id))
@@ -95,6 +160,9 @@
 (defn airframe-forces
   "Compute aerodynamic, thrust, and weight forces for a fixed-wing platform."
   [model state env controls]
+  (validate! AirframeModel model "airframe model")
+  (validate! State state "state")
+  (when env (validate! Environment env "environment"))
   (let [rho-env (or env (env/isa-profile (max 0.0 (nth (:position state) 2))))
         aero (aerodynamic-forces model state rho-env controls)
         g (:gravity-m-s2 rho-env)
@@ -116,6 +184,9 @@
 (defn rigid-body-derivatives
   "Return time derivatives for a 6-DoF rigid body given state map and controls."
   [model state env controls]
+  (validate! AirframeModel model "airframe model")
+  (validate! State state "state")
+  (when env (validate! Environment env "environment"))
   (let [forces (airframe-forces model state env controls)
         mass (:mass-kg model)
         inertia (:inertia model)
@@ -151,6 +222,7 @@
 
 (defn ground-forces
   [model state]
+  (validate! GroundModel model "ground model")
   (let [mass (:mass-kg model)
         mu (or (get-in state [:terrain :mu]) (get-in model [:tires :mu]))
         grade (or (get-in state [:terrain :grade-rad]) 0.0)
@@ -170,6 +242,9 @@
 
 (defn maritime-forces
   [model state env controls]
+  (validate! MaritimeModel model "maritime model")
+  (validate! State state "state")
+  (validate! Environment env "environment")
   (let [{:keys [density-kg-per-m3]} env
         rho (or density-kg-per-m3 1025.0)
         speed (core/magnitude (:velocity state))
@@ -189,6 +264,9 @@
 
 (defn subsurface-forces
   [model state env controls]
+  (validate! SubsurfaceModel model "subsurface model")
+  (validate! State state "state")
+  (validate! Environment env "environment")
   (let [{:keys [density-kg-per-m3]} env
         rho (or density-kg-per-m3 1025.0)
         speed (core/magnitude (:velocity state))
@@ -212,6 +290,8 @@
 
 (defn orbital-derivatives
   [body {:keys [position velocity perturbations?] :as state}]
+  (validate! OrbitalBody body "orbital body")
+  (validate! State state "state")
   (let [[x y z] position
         [vx vy vz] velocity
         r (core/magnitude position)
