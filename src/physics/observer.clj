@@ -9,13 +9,13 @@
 (def ^:private state-order
   [:px :py :pz :vx :vy :vz :qw :qx :qy :qz :p :q :r])
 
-(defn- orientation-quaternion [state]
+(defn orientation-quaternion [state]
   (cond
     (:orientation state) (:orientation state)
     (:attitude state) (core/euler->quaternion (:attitude state))
     :else [1.0 0.0 0.0 0.0]))
 
-(defn- state->vector [state]
+(defn state->vector [state]
   (let [[px py pz] (:position state)
         [vx vy vz] (:velocity state)
         q (orientation-quaternion state)
@@ -23,7 +23,7 @@
         [p q r] (or (:angular-rate state) [0.0 0.0 0.0])]
     [px py pz vx vy vz qw qx qy qz p q r]))
 
-(defn- vector->state [v]
+(defn vector->state [v]
   (let [[px py pz vx vy vz qw qx qy qz p q r] v]
     {:position [px py pz]
      :velocity [vx vy vz]
