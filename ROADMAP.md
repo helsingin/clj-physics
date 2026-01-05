@@ -24,6 +24,6 @@ This document outlines the development trajectory for `clj-physics`.
 ### State Estimation
 - [x] **EKF (Extended Kalman Filter):** Implement standard estimators using the existing `rigid-body-derivatives` for the Jacobian.
 
-## Completed in v0.1.5
-### Polish & Schema Enforcement
+## Future Considerations
+### Performance
 - **SIMD/Vectorization:** Port the CFD Poisson solver (`physics.cfd.corrector`) to `dtype-next` or `tech.ml.dataset` for large-grid performance.
