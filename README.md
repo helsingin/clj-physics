@@ -36,11 +36,11 @@ A complete 6-Degrees-of-Freedom (6-DOF) simulation stack.
 
 ## Install
 
-Pull from Clojars:
+Pull the latest version from [Clojars](https://clojars.org/net.clojars.helsingin/physics):
 
 ```clojure
 ;; deps.edn
-net.clojars.helsingin/physics {:mvn/version "0.1.4"}
+net.clojars.helsingin/physics {:mvn/version "RELEASE"}
 ```
 
 ## Quick Start

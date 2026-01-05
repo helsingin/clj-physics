@@ -14,11 +14,11 @@ This document outlines the development trajectory for `clj-physics`.
 - [x] Add `:events` predicate support to `physics.integrators/rk4` and `rkf45`.
 - [x] Implement linear interpolation for precise event time isolation.
 
-## v0.1.5 (In Progress)
+## v0.1.5 (Completed)
 ### Polish & Schema Enforcement
-- [ ] Add runtime malli validation to `physics.dynamics`.
-- [ ] Add runtime malli validation to `physics.electromagnetics`.
-- [ ] Standardize contribution guidelines in `CONTRIBUTING.md`.
+- [x] Add runtime malli validation to `physics.dynamics`.
+- [x] Add runtime malli validation to `physics.electromagnetics`.
+- [x] Standardize contribution guidelines in `CONTRIBUTING.md`.
 
 ## Future Considerations
 ### State Estimation (v0.2.0)
