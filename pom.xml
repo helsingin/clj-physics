@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>net.clojars.helsingin</groupId>
   <artifactId>physics</artifactId>
-  <version>0.3.1</version>
+  <version>0.3.2</version>
   <name>physics</name>
   <description>Multi-domain physics toolkit for Clojure: frames, environment, dynamics, constraints, integrators, CFD surrogates, electromagnetics.</description>
   <url>https://github.com/helsingin/clj-physics</url>
@@ -19,7 +19,7 @@
     <url>https://github.com/helsingin/clj-physics</url>
     <connection>scm:git:git://github.com/helsingin/clj-physics.git</connection>
     <developerConnection>scm:git:ssh://github.com/helsingin/clj-physics.git</developerConnection>
-    <tag>v0.3.1</tag>
+    <tag>v0.3.2</tag>
   </scm>
   <developers>
     <developer>
