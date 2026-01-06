@@ -7,6 +7,7 @@
 (def ^:const wgs84-f (/ 1.0 298.257223563))
 (def ^:const wgs84-b (* wgs84-a (- 1.0 wgs84-f)))
 (def ^:const wgs84-e2 (* 2.0 wgs84-f (- 1.0 wgs84-f)))
+(def ^:const wgs84-e2-prime (/ (- (* wgs84-a wgs84-a) (* wgs84-b wgs84-b)) (* wgs84-b wgs84-b)))
 (def ^:const earth-rotation 7.2921159e-5)
 
 (defn degrees->radians [deg]
@@ -33,8 +34,32 @@
         z (* (+ (* (- 1.0 wgs84-e2) N) alt-m) sin-lat)]
     [x y z]))
 
+(defn ecef->geodetic
+  "Convert ECEF vector to geodetic coordinates (deg, deg, meters).
+   Uses iterative method for high precision."
+  [[x y z]]
+  (let [r (math/sqrt (+ (* x x) (* y y)))
+        lon-r (math/atan2 y x)
+        
+        ;; Initial guess
+        lat0 (math/atan2 z (* r (- 1.0 wgs84-e2)))]
+    
+    (loop [lat lat0
+           i 0]
+      (let [sin-lat (math/sin lat)
+            N (/ wgs84-a (math/sqrt (- 1.0 (* wgs84-e2 sin-lat sin-lat))))
+            alt (- (/ r (math/cos lat)) N)
+            new-lat (math/atan2 (+ z (* wgs84-e2 N sin-lat)) r)]
+        (if (or (> i 10) (< (Math/abs (- new-lat lat)) 1.0e-9))
+          {:lat-deg (radians->degrees new-lat)
+           :lon-deg (radians->degrees lon-r)
+           :alt-m alt}
+          (recur new-lat (inc i)))))))
+
 (defn- origin-terms [pose]
-  (let [[lat-deg lon-deg alt-m] (:position pose)
+  (let [[lat-deg lon-deg alt-m] (if (map? (:position pose)) 
+                                  [(:lat-deg (:position pose)) (:lon-deg (:position pose)) (:alt-m (:position pose))]
+                                  (:position pose))
         lat-r (degrees->radians lat-deg)
         lon-r (degrees->radians lon-deg)
         sin-lat (math/sin lat-r)
@@ -47,8 +72,8 @@
      :sin-lat sin-lat
      :cos-lat cos-lat
      :sin-lon sin-lon
-    :cos-lon cos-lon
-    :ecef origin-ecef}))
+     :cos-lon cos-lon
+     :ecef origin-ecef}))
 
 (defn ecef->enu
   "Convert ECEF vector into ENU coordinates relative to ORIGIN pose."
@@ -59,14 +84,25 @@
         dx (- xt x0)
         dy (- yt y0)
         dz (- zt z0)
-        east (+ (- (* sin-lon dx)) (* cos-lon dy))
-        north (+ (* (- sin-lat cos-lon) dx)
-                 (* (- sin-lat sin-lon) dy)
+        east (+ (* (- sin-lon) dx) (* cos-lon dy))
+        north (+ (* (- (* sin-lat cos-lon)) dx)
+                 (* (- (* sin-lat sin-lon)) dy)
                  (* cos-lat dz))
         up (+ (* cos-lat cos-lon dx)
               (* cos-lat sin-lon dy)
               (* sin-lat dz))]
     [east north up]))
+
+(defn enu->ecef
+  "Convert ENU vector back to ECEF coordinates relative to ORIGIN pose."
+  [origin-pose [e n u]]
+  (let [{:keys [sin-lat cos-lat sin-lon cos-lon ecef]} (origin-terms origin-pose)
+        [x0 y0 z0] ecef
+        ;; Inverse rotation matrix (transpose of ECEF->ENU)
+        dx (+ (* (- sin-lon) e) (* (- (* sin-lat cos-lon)) n) (* cos-lat cos-lon u))
+        dy (+ (* cos-lon e) (* (- (* sin-lat sin-lon)) n) (* cos-lat sin-lon u))
+        dz (+ (* cos-lat n) (* sin-lat u))]
+    [(+ x0 dx) (+ y0 dy) (+ z0 dz)]))
 
 (defn geodetic->enu
   "Return ENU pose of target with respect to origin pose (WGS84 inputs)."
