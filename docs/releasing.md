@@ -17,31 +17,18 @@ See [CONTRIBUTING.md](../CONTRIBUTING.md) for versioning rules.
 
 2) **Set the version**
    - Edit `version.txt` with the new version (e.g., `0.1.2`).
+   - If new documentation files (manuals/use-cases) were added, ensure they are listed in `cljdoc.edn` so they appear in the documentation sidebar.
 
 3) **Update CHANGELOG.md**
-   - Add a new entry for the version.
-   - Describe major changes, bug fixes, and additions.
-
-4) **Build**
-   - Run `make jar`.
-   - This will:
-     - Sync `pom.xml` to `version.txt`.
-     - Run tools.build to produce `target/physics-<version>.jar`.
-
-5) **Test**
-   - Run `clojure -M:test` (or `make test`) and ensure tests pass.
-
-6) **Deploy**
-   - Set credentials if not in settings.xml:
-     - `export CLOJARS_USERNAME=...`
-     - `export CLOJARS_PASSWORD=...`
-   - Run `make deploy`.
-   - If the version was already published, you’ll see a 403; bump `version.txt` and retry.
-
+...
 7) **Tag and push**
    - Commit changes: `git commit -am "Release 0.3.0"` (ensure version.txt, CHANGELOG.md, pom.xml are included).
    - Tag: `git tag v<version>` (e.g., `git tag v0.1.2`).
    - Push: `git push origin main --tags`.
+
+8) **Verify Documentation**
+   - Check [cljdoc.org/d/net.clojars.helsingin/physics](https://cljdoc.org/d/net.clojars.helsingin/physics) to ensure the version was picked up.
+   - If the build doesn't trigger automatically via the GitHub hook, manually request a build for the new version on the cljdoc dashboard.
 
 ## Notes
 - Version is only edited in `version.txt`.
