@@ -26,11 +26,19 @@
         p-det (/ 1.0 (+ 1.0 (math/exp (- (- (* 10.0 (math/log10 snr)) 10.0)))))] ;; Sigmoid centered at 10dB
     (< (rand) p-det)))
 
+(defn- ensure-v3 [v]
+  (case (count v)
+    3 v
+    2 (conj v 0.0)
+    v))
+
 (defn gps-measurement
   "Generate noisy GPS reading.
    drift: systematic bias (Random Walk).
    noise: white noise."
   [true-pos {:keys [drift noise-sigma] :or {drift [0 0 0] noise-sigma 5.0}}]
-  (mapv + true-pos drift [(gaussian-noise noise-sigma)
-                          (gaussian-noise noise-sigma)
-                          (gaussian-noise noise-sigma)]))
+  (let [p (ensure-v3 true-pos)
+        d (ensure-v3 drift)]
+    (mapv + p d [(gaussian-noise noise-sigma)
+                 (gaussian-noise noise-sigma)
+                 (gaussian-noise noise-sigma)])))

@@ -4,19 +4,23 @@
   (:require [physics.frames :as frames]
             [physics.ops.kinematics :as k]))
 
+(defn- get-geodetic-vec [pos]
+  (if (vector? pos)
+    pos
+    [(:lat-deg pos) (:lon-deg pos) (:alt-m pos)]))
+
 (defn- normalize-to-ecef
   [state]
-  (let [frame (:frame state :world) ;; Default to :world -> ECEF
+  (let [frame (:frame state :world)
         pos (:position state)]
     (case frame
       :ecef state
-      :world state ;; Assume world=ecef for now
-      :wgs84 (assoc state 
-                    :position (frames/geodetic->ecef 
-                               {:lat-deg (nth pos 0) :lon-deg (nth pos 1) :alt-m (nth pos 2)})
-                    :frame :ecef)
-      ;; ENU requires an origin, which is state-dependent context. 
-      ;; We cannot auto-convert ENU without context.
+      :world state
+      :wgs84 (let [[lat lon alt] (get-geodetic-vec pos)]
+               (assoc state 
+                      :position (frames/geodetic->ecef 
+                                 {:lat-deg lat :lon-deg lon :alt-m alt})
+                      :frame :ecef))
       (throw (ex-info "Cannot auto-normalize frame without context" {:frame frame})))))
 
 (defn ensure-frame
