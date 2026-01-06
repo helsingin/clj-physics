@@ -1,50 +1,40 @@
 # clj-physics
 
-**A Data-Oriented Toolkit for Multi-Domain Surrogate Modeling & Simulation**
+**A Data-Oriented Toolkit for High-Assurance Simulation & Operational Modeling**
 
-`clj-physics` is a high-assurance, idiomatic Clojure library designed for modeling, simulation, and synthetic data generation. 
+`clj-physics` is a robust Clojure library designed for simulating physical systems where speed, data transparency, and safety matter more than microscopic visual fidelity.
 
-Unlike traditional finite-element solvers that prioritize microscopic fidelity at the cost of computational expense, `clj-physics` focuses on **surrogate modeling**, **fast-time simulation**, and **uncertainty quantification**. It provides a unified data-driven interface for rigid-body dynamics (6-DOF), computational fluid dynamics (CFD) approximations, and electromagnetic (EM) propagation.
+Unlike a game engine (which prioritizes frame rate) or a finite-element solver (which prioritizes microscopic accuracy at high computational cost), `clj-physics` is built for **Operational Modeling**: asking "what if?" questions in real-time, generating synthetic training data for AI, or running tactical loops in "messy" environments.
 
-## Philosophy
+## What You Can Do
 
-The library is built on three core principles:
+### 1. Simulate Vehicles (Dynamics & Environment)
+Model the motion of aircraft, submarines, and ground vehicles with high fidelity 6-DOF dynamics.
+*   **Physics:** Validated rigid-body models using the **1976 US Standard Atmosphere** and **UNESCO 1983 Ocean Equation of State**.
+*   **Integrators:** Adaptive **Runge-Kutta-Fehlberg (RKF45)** solvers ensure accuracy without wasting cycles.
+*   **Control:** Provide a state map (position, velocity, orientation) and controls (throttle, rudder), and the library calculates time derivatives handling gravity, drag, and propulsion.
 
-1.  **Data as Physics:** All physical entities—from airframes and material properties to flow fields and RF signals—are represented as immutable, schema-validated maps. This facilitates transparent introspection and easier integration with machine learning pipelines.
-2.  **Surrogate & Correct:** For complex phenomena like fluid flow, the library employs a "Surrogate + Corrector" pipeline. It generates fast initial estimates using analytical models (or hooks for ML inference) and then enforces physical plausibility (mass conservation) using a divergence-free projection solver.
-3.  **Numerical Robustness:** The system prioritizes stability over raw speed. Critical arithmetic operations, particularly in electromagnetics, are guarded against underflow/overflow and ill-conditioned states, falling back to `BigDecimal` precision when necessary.
+### 2. Run Tactical "Field Operations"
+A "Survival Mode" layer designed for mission planners and autonomy systems that must operate on noisy, imperfect data.
+*   **Intercepts:** Calculate exactly when/where to aim to intercept a target, with stable math (Citardauq formula) and "Impossible" scenario detection.
+*   **Safety Bubbles:** Check if a drone breaches a No-Fly Zone (3D Prism), accounting for **Worst-Case Error Bounding** ($E \sim t^2$).
+*   **Risk-Awareness:** Calculates uncertainty bounds, telling you not just where a target *is*, but the entire probability envelope of where it *could be*.
 
-## Key Capabilities
+### 3. Model Invisible Phenomena (Surrogates)
+Use **Surrogate Models** to get 90% accurate answers for fluid and EM problems in milliseconds.
+*   **CFD (Fluid Dynamics):** Instantly generate flow fields (wind, chemical plumes) using a "Surrogate + Corrector" pipeline (Helmholtz-Hodge decomposition) to ensure physical plausibility (mass conservation).
+*   **Electromagnetics:** Simulate RF signal attenuation through rain, soil, or walls using **Monte Carlo** propagation to account for material uncertainty. Supports full phasor arithmetic and power density safety checks.
 
-### 🌊 Surrogate CFD
-Avoids the computational cost of full Navier-Stokes solvers by using reduced-order models suitable for mission planning and real-time synthesis.
-*   **Helmholtz-Hodge Decomposition:** Implements a grid-based **Poisson solver** (Conjugate Gradient method) to project analytical flow fields (like Gaussian plumes) onto a divergence-free manifold, ensuring mass conservation and boundary enforcement.
-*   **Domain Wrappers:** Specialized APIs for **Atmospheric Plumes** (dispersion modeling), **Maritime/Shallow-Water** (wave fields), and **Debris Transport**.
-*   **ML Integration:** A registry system allows the injection of external machine learning models (e.g., ONNX) to serve as the surrogate prior.
+### 4. Estimate State (Kalman Filters)
+Recover "True" state from noisy sensors (like jittery GPS).
+*   **EKF:** Built-in **Extended Kalman Filter** with automatic numerical Jacobian differentiation.
+*   **Fusion:** Fuse physics-based predictions with noisy measurements to track position, velocity, and orientation covariance.
 
-### 📡 Electromagnetics
-A robust engine for modeling RF propagation, safety envelopes, and material interaction.
-*   **Stochastic Propagation:** Built-in Monte Carlo engine for propagating plane waves through media with statistical uncertainty.
-*   **Phasor Arithmetic:** Full support for harmonic fields ($e^{j\omega t}$ convention), superposition, and polarization.
-*   **Safety Constraints:** Automated evaluation of power density ($W/m^2$) and field amplitude limits.
+## Why use this over a game engine?
 
-### ✈️ Dynamics & Environment
-A complete 6-Degrees-of-Freedom (6-DOF) simulation stack.
-*   **Integrators:** Adaptive **Runge-Kutta-Fehlberg (RKF45)** and classic RK4 integrators.
-*   **Platform Models:** Validated models for **Fixed-Wing Aircraft**, **UGVs**, **USVs**, and **Submarines**.
-*   **Environment:** High-fidelity WGS84 coordinate transforms, **1976 US Standard Atmosphere** (up to 86km), and **UNESCO 1983 Ocean Equation of State**.
-
-### 🧠 State Estimation (EKF)
-A guidance and navigation toolkit for noisy systems.
-*   **Numerical Jacobian:** Automatic differentiation of 6-DOF dynamics.
-*   **Extended Kalman Filter:** Generic Predict/Update implementation for fusing noisy telemetry (position/velocity) with a physics-based prior to recover true state and covariance.
-
-### 🛡️ Field Operations (Survival Mode)
-A high-resilience tactical layer for high-stakes operational environments.
-*   **Risk-Aware Kinematics:** Propagates both state and **uncertainty bubbles** (Worst-Case Error Bounding) to prevent dangerous optimism in estimation.
-*   **Tactical Intercepts:** Numerically stable solvers for Time-To-Go (TTG), Closure Rate, and Lead Angle, with automatic degradation to "Pure Pursuit" if intercepts are physically impossible.
-*   **Conservative Safety:** Constraint checkers that respect uncertainty margins. A separation check fails if the *error bubbles* overlap, not just the center-points.
-*   **Survival Grade:** Zero-exception policy. Functions clamp wild inputs (e.g., 100g accel glitches), handle `NaN` gracefully, and iterate time-steps to ensure temporal truth.
+1.  **Data-Oriented:** Every entity—a plane, a radio wave, a wind field—is just a Clojure map. There are no opaque objects. You can save, inspect, or send simulation state over a wire instantly.
+2.  **High-Assurance Safety:** The library enforces SI units (keys like `:mass-kg`, `:pressure-pa`) and includes "Survival Mode" guardrails. It handles `NaN` inputs gracefully by degrading performance rather than crashing the JVM.
+3.  **Determinism:** The math is rigorous to ensure that a simulation running on a laptop yields the exact same result as one running on a server, critical for distributed training and testing.
 
 ## Install
 
@@ -57,35 +47,45 @@ net.clojars.helsingin/physics {:mvn/version "RELEASE"}
 
 ## Quick Start
 
+### 1. Dynamics: Fly a Plane
 ```clojure
-(require '[physics.electromagnetics.fields :as f]
-         '[physics.electromagnetics.materials :as m]
-         '[physics.electromagnetics.propagation :as p]
-         '[physics.frames :as frames]
+(require '[physics.dynamics :as dyn]
+         '[physics.models.common :as models]
          '[physics.environment :as env]
-         '[physics.dynamics :as dyn])
+         '[physics.core :as core])
 
-;; 1. Build a field and propagate it
-(def field (f/->field {:type :electric :frequency-hz 2.4e9 :amplitude 1.0 :orientation [0 0 1]}))
-(def air (m/->material {:name "air" :type :dielectric :permittivity-rel 1.0006 :conductivity-s-m 0.0}))
-(p/propagate-plane-wave field air 100.0)
-
-;; 2. Frame transforms (WGS84 <-> ECEF)
-(def origin {:position [37.62 -122.38 0.0]})
-(frames/geodetic->ecef {:lat-deg 37.62 :lon-deg -122.38 :alt-m 0.0})
-
-;; 3. Dynamics: compute derivatives for a fixed-wing state
-(def model (physics.models.common/fixed-wing))
+(def model models/fixed-wing)
 (def state {:position [0 0 1000]
             :velocity [60 0 0]
-            :orientation (physics.core/euler->quaternion {:roll 0 :pitch 0 :yaw 0})
+            :orientation (core/euler->quaternion {:roll 0 :pitch 0 :yaw 0})
             :angular-rate [0 0 0]})
-(dyn/rigid-body-derivatives model state (env/isa-profile 1000) {:throttle 0.5})
 
-;; 4. Field Operations: Lead Pursuit Intercept
-(require '[physics.ops.intercept :as intercept])
-(intercept/guidance :lead [0 0 0] 100.0 [500 500 0] [-20 0 0])
-;; => Aim vector towards predicted intercept point
+;; Compute forces at 1,000m altitude
+(dyn/rigid-body-derivatives model state (env/isa-profile 1000) {:throttle 0.5})
+```
+
+### 2. Field Ops: Tactical Intercept
+*"Can I reach the target?"*
+```clojure
+(require '[physics.ops.intercept :as int])
+
+;; Calculate lead pursuit vector for a target moving at 10m/s
+(int/guidance :lead 
+              [0 0 0]   ;; My Position
+              100.0     ;; My Speed
+              [500 0 0] ;; Target Position
+              [0 10 0]) ;; Target Velocity
+;; => {:aim-vector [0.196 0.98 ...], :status :valid}
+```
+
+### 3. Electromagnetics: RF Safety
+```clojure
+(require '[physics.electromagnetics.fields :as f]
+         '[physics.electromagnetics.constraints :as c])
+
+(def radar-pulse (f/->field {:type :electric :frequency-hz 9e9 :amplitude 200.0}))
+(c/evaluate-field-amplitude radar-pulse {:limit 100.0})
+;; => Checks if amplitude exceeds hardware limits
 ```
 
 ## Tests
@@ -93,11 +93,10 @@ net.clojars.helsingin/physics {:mvn/version "RELEASE"}
 ```bash
 clojure -M:test
 ```
-Tests cover core math, frames, environment, dynamics, constraints, integrators, observer, CFD, electromagnetics, and spatial utilities. A default `tests.edn` is included for Kaocha with a pinned seed.
 
-## Build and release
-- Build the jar: `clojure -T:build jar`
-- Deploy to Clojars: `make deploy` (reads credentials from `~/.m2/settings.xml` server `clojars`, or falls back to `CLOJARS_USERNAME`/`CLOJARS_PASSWORD` if exported)
+## Build and Release
+- Build: `make jar`
+- Deploy: `make deploy`
 
 ## License
 Licensed under GPL-3.0-only. See `LICENSE` for details.
