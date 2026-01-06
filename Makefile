@@ -10,7 +10,7 @@ test:
 	clojure -M:test
 
 version-sync:
-	python3 -c "import pathlib,re; v=pathlib.Path('version.txt').read_text().strip(); p=pathlib.Path('pom.xml'); t=p.read_text(); t=re.sub(r'<version>[^<]+</version>', f'<version>{v}</version>', t, count=1); p.write_text(t)"
+	python3 -c "import pathlib,re; v=pathlib.Path('version.txt').read_text().strip(); p=pathlib.Path('pom.xml'); t=p.read_text(); t=re.sub(r'<version>[^<]+</version>', f'<version>{v}</version>', t, count=1); t=re.sub(r'<tag>[^<]+</tag>', f'<tag>v{v}</tag>', t, count=1); p.write_text(t)"
 
 jar: version-sync
 	clojure -T:build jar

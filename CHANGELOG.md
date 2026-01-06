@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-01-06
+
+### Fixed
+- **Documentation:** Fixed `cljdoc.edn` to correctly list the new Field Operations manuals in the documentation sidebar.
+- **Build:** Updated `Makefile` to strictly sync the SCM `<tag>` field in `pom.xml` to the git tag (e.g., `v0.3.1`), eliminating ambiguity for release tooling.
+
 ## [0.3.0] - 2026-01-06
 
 ### Added
