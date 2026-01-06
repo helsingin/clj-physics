@@ -1,2 +1,13 @@
 {:cljdoc.v1/doc
- {:source-root "src"}}
+ {:source-root "src"
+  :articles
+  [{:title "Field Operations Guide"
+    :file "docs/ops-usage.md"}
+   {:title "Use Cases"
+    :file "docs/use-cases.md"}
+   {:title "Releasing"
+    :file "docs/releasing.md"}
+   {:title "Roadmap"
+    :file "ROADMAP.md"}
+   {:title "Changelog"
+    :file "CHANGELOG.md"}]}}
