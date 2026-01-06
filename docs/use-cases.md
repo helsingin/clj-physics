@@ -208,6 +208,38 @@ Basic pose normalization and topology helpers:
 ;; geometry/topology helpers can be composed for mesh or path processing
 ```
 
+## 16) Field Operations: Tactical Intercept & Safety
+Run a "Survival Mode" tactical loop: predict target motion with uncertainty, check safety constraints, and generate guidance.
+
+```clojure
+(require '[physics.ops.kinematics :as k]
+         '[physics.ops.intercept :as int]
+         '[physics.ops.safety :as safe]
+         '[physics.ops.uncertainty :as unc])
+
+;; 1. Current World State (with Uncertainty)
+(def interceptor {:position [0 0 0] :velocity [20 0 0] :uncertainty {:pos 1.0}})
+(def target      {:position [100 100 0] :velocity [-10 0 0] :uncertainty {:pos 5.0 :vel 1.0}})
+
+;; 2. Propagate Target (Risk-Aware)
+;; Projects position AND grows error bubble (Worst-Case Bounding)
+(def pred-target (k/propagate target 5.0)) 
+
+;; 3. Check Safety (Conservative)
+;; Fails if error bubbles overlap or breach 50m separation
+(def safety-check 
+  (safe/conservative-predictive-safety? 
+    interceptor target 
+    (:uncertainty interceptor) (:uncertainty target)
+    {:min-separation 50.0}
+    {:horizon 10.0 :dt 1.0}))
+
+;; 4. Generate Guidance
+(if (:safe? safety-check)
+  (int/guidance :lead (:position interceptor) 20.0 (:position target) (:velocity target))
+  {:action :abort :reason (:violation safety-check)})
+```
+
 ---
 
 These examples are schematic by design—start here, then dive into the namespaces for details and additional options.

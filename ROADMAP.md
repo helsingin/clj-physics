@@ -24,6 +24,14 @@ This document outlines the development trajectory for `clj-physics`.
 ### State Estimation
 - [x] **EKF (Extended Kalman Filter):** Implement standard estimators using the existing `rigid-body-derivatives` for the Jacobian.
 
+## Completed in v0.3.0
+### 🛡️ Field Operations (Survival Mode)
+**Goal:** A high-resilience tactical layer for "messy" environments prioritizing system stability and worst-case bounding.
+- [x] **Risk-Aware Kinematics:** CV/CA models that automatically propagate uncertainty bubbles ($E \sim t^2$).
+- [x] **Tactical Intercepts:** Numerically stable solvers with automatic "Pure Pursuit" fallbacks.
+- [x] **Conservative Safety:** Constraint checkers (Separation, 3D Prisms) that respect uncertainty margins.
+- [x] **Tactical Assignment:** Robust cost-matrices and Navigation Standard (0=North) sector mapping.
+
 ## Future Considerations
 ### Performance
 - **SIMD/Vectorization:** Port the CFD Poisson solver (`physics.cfd.corrector`) to `dtype-next` or `tech.ml.dataset` for large-grid performance.

@@ -39,6 +39,13 @@ A guidance and navigation toolkit for noisy systems.
 *   **Numerical Jacobian:** Automatic differentiation of 6-DOF dynamics.
 *   **Extended Kalman Filter:** Generic Predict/Update implementation for fusing noisy telemetry (position/velocity) with a physics-based prior to recover true state and covariance.
 
+### 🛡️ Field Operations (Survival Mode)
+A high-resilience tactical layer for high-stakes operational environments.
+*   **Risk-Aware Kinematics:** Propagates both state and **uncertainty bubbles** (Worst-Case Error Bounding) to prevent dangerous optimism in estimation.
+*   **Tactical Intercepts:** Numerically stable solvers for Time-To-Go (TTG), Closure Rate, and Lead Angle, with automatic degradation to "Pure Pursuit" if intercepts are physically impossible.
+*   **Conservative Safety:** Constraint checkers that respect uncertainty margins. A separation check fails if the *error bubbles* overlap, not just the center-points.
+*   **Survival Grade:** Zero-exception policy. Functions clamp wild inputs (e.g., 100g accel glitches), handle `NaN` gracefully, and iterate time-steps to ensure temporal truth.
+
 ## Install
 
 Pull the latest version from [Clojars](https://clojars.org/net.clojars.helsingin/physics):
@@ -74,6 +81,11 @@ net.clojars.helsingin/physics {:mvn/version "RELEASE"}
             :orientation (physics.core/euler->quaternion {:roll 0 :pitch 0 :yaw 0})
             :angular-rate [0 0 0]})
 (dyn/rigid-body-derivatives model state (env/isa-profile 1000) {:throttle 0.5})
+
+;; 4. Field Operations: Lead Pursuit Intercept
+(require '[physics.ops.intercept :as intercept])
+(intercept/guidance :lead [0 0 0] 100.0 [500 500 0] [-20 0 0])
+;; => Aim vector towards predicted intercept point
 ```
 
 ## Tests

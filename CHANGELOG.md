@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-01-06
+
+### Added
+- **Field Operations (Survival Mode):** Added a new `physics.ops` layer designed for high-stakes operational environments where system stability and risk awareness are paramount.
+    - **Kinematics:** Risk-aware propagation (`physics.ops.kinematics`) that automatically grows uncertainty bubbles ($E \sim t^2$) and clamps wild inputs (e.g., 100g acceleration glitches).
+    - **Intercepts:** Numerically stable solvers (`physics.ops.intercept`) for Time-To-Go, Closure Rate, and Lead Angle, featuring automatic "Pure Pursuit" fallback and Citardauq quadratic stability.
+    - **Safety:** Conservative constraint checkers (`physics.ops.safety`) that fail if *uncertainty bubbles* overlap or breach boundaries, not just nominal positions. Includes 3D Prism checks (Polygon + Altitude).
+    - **Uncertainty:** Worst-case error bounding models (`physics.ops.uncertainty`) including linear/quadratic growth and geometric buffer inflation.
+    - **Assignment:** Tactical logic (`physics.ops.assignment`) for cost-matrix evaluation and sector assignment using Navigation Standard (0=North).
+
 ## [0.2.0] - 2026-01-04
 
 ### Added
